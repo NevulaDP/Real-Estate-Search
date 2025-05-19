@@ -84,41 +84,30 @@ elif st.session_state.pending_features is not None:
         image_features = features[start:end]
     
         with st.container():
-            # Outer card box with background using st.markdown
-            st.markdown("""
-                <style>
-                    .feature-box {
-                        background-color: #1e1e1e;
-                        border-radius: 12px;
-                        padding: 20px;
-                        margin-bottom: 2rem;
-                        border: 1px solid rgba(255,255,255,0.1);
-                    }
-                </style>
-                <div class='feature-box'>
-            """, unsafe_allow_html=True)
-    
+            # Columns: Image left, features right
             col1, col2 = st.columns([1, 2], gap="large")
     
             with col1:
-                st.image(image_file, width=280)
+                st.image(image_file, width=250, caption="")
     
             with col2:
-                for feat_idx, feature in enumerate(image_features):
-                    label = feature["item"]
-                    description = feature["description"]
-                    key = f"feature_{img_idx}_{feat_idx}_{label}"
+                with st.container():
+                    st.markdown("### Features")
+                    for feat_idx, feature in enumerate(image_features):
+                        label = feature["item"]
+                        description = feature["description"]
+                        key = f"feature_{img_idx}_{feat_idx}_{label}"
     
-                    checked = st.checkbox(f"**{label}**", value=True, key=key)
-                    if checked:
-                        confirmed_features.append(feature)
+                        checked = st.checkbox(f"**{label}**", value=True, key=key)
+                        if checked:
+                            confirmed_features.append(feature)
     
-                    st.caption(description)
-                    if feat_idx < len(image_features) - 1:
-                        st.markdown("<hr style='margin-top: 0.25rem; margin-bottom: 0.75rem;'>", unsafe_allow_html=True)
+                        st.caption(description)
+                        if feat_idx < len(image_features) - 1:
+                            st.markdown("<hr style='margin-top: 0.25rem; margin-bottom: 0.75rem;'>", unsafe_allow_html=True)
     
-            # Close the div after both columns render
-            st.markdown("</div>", unsafe_allow_html=True)
+            # Separator between image blocks
+            st.markdown("---")
 
 
 
