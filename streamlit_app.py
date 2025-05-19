@@ -77,39 +77,39 @@ elif st.session_state.pending_features is not None:
     num_images = len(uploaded_images)
     features_per_image = len(features) // num_images if num_images else len(features)
     
-      for img_idx, image_file in enumerate(uploaded_images):
-        start = img_idx * features_per_image
-        end = (img_idx + 1) * features_per_image if img_idx < num_images - 1 else len(features)
-        image_features = features[start:end]
-    
-        col_img, col_feats = st.columns([1.2, 3])
-    
-        # LEFT COLUMN: Vertically centered image using base64
-        with col_img:
-            img_b64 = image_to_base64(image_file)
-            st.markdown(
-                f"""
-                <div style='display: flex; justify-content: center; align-items: center; height: 100%;'>
-                    <img src="data:image/jpeg;base64,{img_b64}" style="max-width: 100%; border-radius: 8px;" />
-                </div>
-                """,
-                unsafe_allow_html=True
-            )
-    
-        # RIGHT COLUMN: Features
-        with col_feats:
-            for feat_idx, feature in enumerate(image_features):
-                label = feature["item"]
-                description = feature["description"]
-                key = f"feature_{img_idx}_{feat_idx}_{label}"
-    
-                if st.checkbox(label, value=True, key=key):
-                    confirmed_features.append(feature)
-    
-                st.caption(description)
-                st.markdown("<hr style='margin-top: 0.25rem; margin-bottom: 0.75rem;'>", unsafe_allow_html=True)
-    
-        st.markdown("<br><hr><br>", unsafe_allow_html=True)
+  for img_idx, image_file in enumerate(uploaded_images):
+    start = img_idx * features_per_image
+    end = (img_idx + 1) * features_per_image if img_idx < num_images - 1 else len(features)
+    image_features = features[start:end]
+
+    col_img, col_feats = st.columns([1.2, 3])
+
+    # LEFT COLUMN: Vertically centered image using base64
+    with col_img:
+        img_b64 = image_to_base64(image_file)
+        st.markdown(
+            f"""
+            <div style='display: flex; justify-content: center; align-items: center; height: 100%;'>
+                <img src="data:image/jpeg;base64,{img_b64}" style="max-width: 100%; border-radius: 8px;" />
+            </div>
+            """,
+            unsafe_allow_html=True
+        )
+
+    # RIGHT COLUMN: Features
+    with col_feats:
+        for feat_idx, feature in enumerate(image_features):
+            label = feature["item"]
+            description = feature["description"]
+            key = f"feature_{img_idx}_{feat_idx}_{label}"
+
+            if st.checkbox(label, value=True, key=key):
+                confirmed_features.append(feature)
+
+            st.caption(description)
+            st.markdown("<hr style='margin-top: 0.25rem; margin-bottom: 0.75rem;'>", unsafe_allow_html=True)
+
+    st.markdown("<br><hr><br>", unsafe_allow_html=True)
 
 
     if st.button("Finalize Entry"):
