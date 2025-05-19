@@ -45,16 +45,16 @@ if st.session_state.pending_features is None:
 
         submitted = st.form_submit_button("Submit Entry")
 
-if submitted and uploaded_images:
-    all_features = []
-
-    for image_file in uploaded_images:
-        st.info(f"🔍 Analyzing: {image_file.name}")
-        items = extract_features(image_file, palm)
-
-        st.write("Extracted from Gemini:", items)  # 🔍 Add this line
-
-        all_features.extend(items)
+        if submitted and uploaded_images:
+            all_features = []
+        
+            for image_file in uploaded_images:
+                st.info(f"🔍 Analyzing: {image_file.name}")
+                items = extract_features(image_file, palm)
+        
+                st.write("Extracted from Gemini:", items)  # 🔍 Add this line
+        
+                all_features.extend(items)
 
         # Save inputs and features for confirmation phase
         st.session_state.pending_features = all_features
