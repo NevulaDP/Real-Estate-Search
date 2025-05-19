@@ -74,29 +74,38 @@ elif st.session_state.pending_features is not None:
     st.subheader("✅ Confirm Extracted Features")
     
     confirmed_features = []
-    
+    features = st.session_state.pending_features
     uploaded_images = st.session_state.form_inputs.get("uploaded_images", [])
     
-    # Layout: images on the left, features on the right
-    col_img, col_features = st.columns([1, 3])
+    # Estimate features per image (you can improve this if you store mapping)
+    num_images = len(uploaded_images)
+    features_per_image = len(features) // num_images if num_images else len(features)
     
-    with col_img:
-        if uploaded_images:
-           # st.markdown("### Uploaded Images")
-            for img in uploaded_images:
-                st.image(img, use_container_width=True)
+    for img_idx, image in enumerate(uploaded_images):
+        start = img_idx * features_per_image
+        end = (img_idx + 1) * features_per_image if img_idx < num_images - 1 else len(features)
+        related_features = features[start:end]
     
-    with col_features:
-        for idx, feature in enumerate(st.session_state.pending_features):
-            label = feature["item"]
-            description = feature["description"]
-            key = f"feature_{idx}_{label}"
+        col_img, col_feats = st.columns([1, 3])
     
-            if st.checkbox(f"**{label}**", value=True, key=key):
-                confirmed_features.append(feature)
+        # LEFT COLUMN: image
+        with col_img:
+            st.image(image, use_container_width=True)
     
-            st.caption(description)
-            st.markdown("<hr style='margin-top: 0.25rem; margin-bottom: 1rem;'>", unsafe_allow_html=True)
+        # RIGHT COLUMN: features associated with this image
+        with col_feats:
+            for feat_idx, feature in enumerate(related_features):
+                label = feature["item"]
+                description = feature["description"]
+                key = f"feature_{img_idx}_{feat_idx}_{label}"
+    
+                st.markdown(f"**{label}**")
+                st.caption(description)
+                if st.checkbox("Include this feature", value=True, key=key):
+                    confirmed_features.append(feature)
+    
+                st.markdown("<hr style='margin-top: 0.5rem; margin-bottom: 0.5rem;'>", unsafe_allow_html=True)
+
 
 
 
