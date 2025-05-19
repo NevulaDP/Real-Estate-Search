@@ -113,7 +113,7 @@ elif st.session_state.pending_features is not None:
 
     
     # Center-aligned Finalize Entry button
-    col1, col2, col3 = st.columns([1, 5, 1])  # Adjust ratios as needed
+    col1, col2, col3 = st.columns([1, 1, 1])  # Adjust ratios as needed
     with col2:
         if st.button("Finalize Entry"):
             inputs = st.session_state.form_inputs
