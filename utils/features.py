@@ -8,7 +8,7 @@ import google.generativeai as palm
 def extract_features(image_file, _):
   {"item": "Modern Lamp", "description": "A sleek lamp with LED light."},
   {"item": "Bookshelf", "description": "Wooden bookshelf with five shelves."}
-        return []
+  return []
 
 def generate_combined_text(
     title,
