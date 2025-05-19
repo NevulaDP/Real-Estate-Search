@@ -69,7 +69,7 @@ if st.session_state.pending_features is None:
             "uploaded_images": uploaded_images
         }
 
-        st.experimental_rerun()
+        st.rerun()
 
 # --- PHASE 2: Confirm features, then save entry ---
 elif st.session_state.pending_features is not None:
