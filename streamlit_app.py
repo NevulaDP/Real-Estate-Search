@@ -4,9 +4,6 @@ import uuid
 import google.generativeai as palm
 from sentence_transformers import SentenceTransformer
 
-import base64 # for image alignment 
-import io
-
 from utils.features import extract_features, generate_combined_text
 from utils.database import create_property_entry
 
@@ -16,15 +13,6 @@ palm.configure(api_key=st.secrets["GOOGLE_API_KEY"])
 @st.cache_resource
 def load_embedding_model():
     return SentenceTransformer("all-MiniLM-L6-v2")
-
-#image to base64
-def image_to_base64(image_file):
-    image = Image.open(image_file).convert("RGB")
-    buffered = io.BytesIO()
-    image.save(buffered, format="JPEG")
-    img_bytes = buffered.getvalue()
-    img_b64 = base64.b64encode(img_bytes).decode("utf-8")
-    return img_b64
 
 model = load_embedding_model()
 
@@ -83,44 +71,40 @@ if st.session_state.pending_features is None:
 # --- PHASE 2: Confirm features, then save entry ---
 elif st.session_state.pending_features is not None:
     confirmed_features = []
-    features = st.session_state.pending_features
-    uploaded_images = st.session_state.form_inputs.get("uploaded_images", [])
-    
-    num_images = len(uploaded_images)
-    features_per_image = len(features) // num_images if num_images else len(features)
-    
-    for img_idx, image_file in enumerate(uploaded_images):
-        start = img_idx * features_per_image
-        end = (img_idx + 1) * features_per_image if img_idx < num_images - 1 else len(features)
-        image_features = features[start:end]
-    
-        img_b64 = image_to_base64(image_file)
-    
-        col_img, col_feats = st.columns([1.3, 3])
-    
-        with col_img:
-            st.markdown(
-                f"""
-                <div style='display: flex; justify-content: center; align-items: center; height: 100%;'>
-                    <img src="data:image/jpeg;base64,{img_b64}" style="width: 100%; max-width: 280px; border-radius: 10px;" />
-                </div>
-                """,
-                unsafe_allow_html=True
-            )
-    
-        with col_feats:
-            for feat_idx, feature in enumerate(image_features):
-                label = feature["item"]
-                description = feature["description"]
-                key = f"feature_{img_idx}_{feat_idx}_{label}"
-    
-                if st.checkbox(label, value=True, key=key):
-                    confirmed_features.append(feature)
-    
-                st.caption(description)
-                st.markdown("<hr style='margin-top: 0.25rem; margin-bottom: 0.75rem;'>", unsafe_allow_html=True)
-    
-        st.markdown("<br><hr><br>", unsafe_allow_html=True)
+        features = st.session_state.pending_features
+        uploaded_images = st.session_state.form_inputs.get("uploaded_images", [])
+        
+        # Divide features evenly across images
+        num_images = len(uploaded_images)
+        features_per_image = len(features) // num_images if num_images else len(features)
+        
+        for img_idx, image_file in enumerate(uploaded_images):
+            start = img_idx * features_per_image
+            end = (img_idx + 1) * features_per_image if img_idx < num_images - 1 else len(features)
+            image_features = features[start:end]
+        
+            col_img, col_feats = st.columns([1, 2])
+        
+            # LEFT: Larger image
+            with col_img:
+                st.image(image_file, width=300)
+        
+            # RIGHT: Inline checkbox + label, clean style
+            with col_feats:
+                for feat_idx, feature in enumerate(image_features):
+                    label = feature["item"]
+                    description = feature["description"]
+                    key = f"feature_{img_idx}_{feat_idx}_{label}"
+        
+                    # Checkbox inline with label
+                    included = st.checkbox(label, value=True, key=key)
+                    if included:
+                        confirmed_features.append(feature)
+        
+                    st.caption(description)
+                    st.markdown("<hr style='margin-top: 0.25rem; margin-bottom: 0.75rem;'>", unsafe_allow_html=True)
+        
+            st.markdown("---")  # separator between image blocks
 
 
     if st.button("Finalize Entry"):
