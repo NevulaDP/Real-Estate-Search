@@ -1,0 +1,7 @@
+streamlit
+transformers
+torch
+faiss-cpu
+sentence-transformers
+google-generativeai
+Pillow
