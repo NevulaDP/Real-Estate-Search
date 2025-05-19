@@ -18,16 +18,13 @@ def extract_features(image_file, client):
         Image data: {img_str[:150]}... (truncated)
         """
 
-        st.info("📤 Sending image and prompt to Gemini...")
+        st.info("📤 Analyzing your property...")
         model = client.GenerativeModel("gemini-2.0-flash")
         response = model.generate_content(
             contents=[prompt, image],
             generation_config={"response_mime_type": "application/json"}
         )
 
-
-        st.code(f"🔁 Gemini raw response type: {type(response)}")
-        st.code(f"🧠 Gemini response.text: {response.text}")
 
         try:
             parsed = json.loads(response.text)
