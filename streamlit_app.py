@@ -113,9 +113,9 @@ elif st.session_state.pending_features is not None:
 
     
     # Center-aligned Finalize Entry button
-    col1, col2, col3 = st.columns([1, 0.2, 1])  # Adjust ratios as needed
+    col1, col2, col3 = st.columns([1, 1, 1])  # Adjust ratios as needed
     with col2:
-        st.markdown("<div style='height: 20px'></div>", unsafe_allow_html=True)
+        st.markdown("<div style='height: 15px'></div>", unsafe_allow_html=True)
         if st.button("Finalize Entry" ,use_container_width=True):
             inputs = st.session_state.form_inputs
     
