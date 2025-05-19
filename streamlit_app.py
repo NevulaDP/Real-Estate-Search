@@ -74,7 +74,6 @@ elif st.session_state.pending_features is not None:
     features = st.session_state.pending_features
     uploaded_images = st.session_state.form_inputs.get("uploaded_images", [])
     
-    # Divide features evenly across images
     num_images = len(uploaded_images)
     features_per_image = len(features) // num_images if num_images else len(features)
     
@@ -82,29 +81,40 @@ elif st.session_state.pending_features is not None:
         start = img_idx * features_per_image
         end = (img_idx + 1) * features_per_image if img_idx < num_images - 1 else len(features)
         image_features = features[start:end]
+        
+        # Split features in two: before and after the image
+        midpoint = len(image_features) // 2
+        first_half = image_features[:midpoint]
+        second_half = image_features[midpoint:]
     
-        col_img, col_feats = st.columns([1, 2])
+        # Show first half of features
+        for feat_idx, feature in enumerate(first_half):
+            label = feature["item"]
+            description = feature["description"]
+            key = f"feature_{img_idx}_top_{feat_idx}_{label}"
     
-        # LEFT: Larger image
-        with col_img:
-            st.image(image_file, width=300)
+            if st.checkbox(label, value=True, key=key):
+                confirmed_features.append(feature)
+            st.caption(description)
+            st.markdown("<hr style='margin-top: 0.25rem; margin-bottom: 0.75rem;'>", unsafe_allow_html=True)
     
-        # RIGHT: Inline checkbox + label, clean style
-        with col_feats:
-            for feat_idx, feature in enumerate(image_features):
-                label = feature["item"]
-                description = feature["description"]
-                key = f"feature_{img_idx}_{feat_idx}_{label}"
+        # Centered enlarged image
+        st.markdown("<div style='text-align: center;'>", unsafe_allow_html=True)
+        st.image(image_file, width=500)
+        st.markdown("</div>", unsafe_allow_html=True)
     
-                # Checkbox inline with label
-                included = st.checkbox(label, value=True, key=key)
-                if included:
-                    confirmed_features.append(feature)
+        # Show second half of features
+        for feat_idx, feature in enumerate(second_half):
+            label = feature["item"]
+            description = feature["description"]
+            key = f"feature_{img_idx}_bot_{feat_idx}_{label}"
     
-                st.caption(description)
-                st.markdown("<hr style='margin-top: 0.25rem; margin-bottom: 0.75rem;'>", unsafe_allow_html=True)
+            if st.checkbox(label, value=True, key=key):
+                confirmed_features.append(feature)
+            st.caption(description)
+            st.markdown("<hr style='margin-top: 0.25rem; margin-bottom: 0.75rem;'>", unsafe_allow_html=True)
     
-        st.markdown("---")  # separator between image blocks
+        st.markdown("---")
 
 
     if st.button("Finalize Entry"):
