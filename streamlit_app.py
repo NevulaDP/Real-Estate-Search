@@ -46,31 +46,26 @@ if st.session_state.pending_features is None:
         submitted = st.form_submit_button("Submit Entry")
     # Only execute this if the form is submitted
         if submitted and uploaded_images:
-            all_features = []
-    
-            for image_file in uploaded_images:
-                st.info(f"🔍 Analyzing: {image_file.name}")
-                items = extract_features(image_file, palm)
-                st.write("Extracted from Gemini:", items)
-                all_features.extend(items)
-    
-            # Save to session state for next step
-            st.session_state.pending_features = all_features
-            st.session_state.form_inputs = {
-                "title": title,
-                "short_description": short_description,
-                "location": location,
-                "price": price,
-                "size": size,
-                "num_bedrooms": num_bedrooms,
-                "num_bathrooms": num_bathrooms,
-                "balcony": balcony,
-                "parking": parking,
-                "floor": floor,
-                "uploaded_images": uploaded_images
-            }
-    
-            st.rerun()
+                # 🧪 TEST MODE: inject fake features
+                fake_features = [
+                    {"item": "Sofa", "description": "A gray 3-seater sofa."},
+                    {"item": "Bookshelf", "description": "A tall wooden bookshelf."}
+                ]
+                st.session_state.pending_features = fake_features  # ✅ Force something in
+                st.session_state.form_inputs = {
+                    "title": title,
+                    "short_description": short_description,
+                    "location": location,
+                    "price": price,
+                    "size": size,
+                    "num_bedrooms": num_bedrooms,
+                    "num_bathrooms": num_bathrooms,
+                    "balcony": balcony,
+                    "parking": parking,
+                    "floor": floor,
+                    "uploaded_images": uploaded_images
+                }
+                st.rerun()
 # --- PHASE 2: Confirm features, then save entry ---
 # --- PHASE 2: Confirm features, then save entry ---
 elif st.session_state.pending_features is not None:
