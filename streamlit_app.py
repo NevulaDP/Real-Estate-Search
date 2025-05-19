@@ -46,12 +46,15 @@ if st.session_state.pending_features is None:
         submitted = st.form_submit_button("Submit Entry")
     # Only execute this if the form is submitted
         if submitted and uploaded_images:
-                # 🧪 TEST MODE: inject fake features
-                fake_features = [
-                    {"item": "Sofa", "description": "A gray 3-seater sofa."},
-                    {"item": "Bookshelf", "description": "A tall wooden bookshelf."}
-                ]
-                st.session_state.pending_features = fake_features  # ✅ Force something in
+                all_features = []
+
+                for image_file in uploaded_images:
+                    st.info(f"🔍 Analyzing image: {image_file.name}")
+                    items = extract_features(image_file, palm)  # uses the fixed version from features.py
+                    st.write("🧪 Features from Gemini:", items)  # debug output
+                    all_features.extend(items)
+                
+                st.session_state.pending_features = all_features
                 st.session_state.form_inputs = {
                     "title": title,
                     "short_description": short_description,
