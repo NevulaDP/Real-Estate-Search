@@ -111,37 +111,38 @@ elif st.session_state.pending_features is not None:
 
 
 
-
-
-
-    if st.button("Finalize Entry"):
-        inputs = st.session_state.form_inputs
-
-        # Generate final description
-        combined_text = generate_combined_text(
-            inputs["title"], inputs["short_description"], inputs["location"],
-            inputs["price"], inputs["size"], inputs["num_bedrooms"],
-            inputs["num_bathrooms"], inputs["balcony"], inputs["parking"], inputs["floor"],
-            detected_features=confirmed_features
-        )
-
-        embedding = model.encode(combined_text)
-
-        entry = create_property_entry(
-            inputs["title"], inputs["short_description"], inputs["location"],
-            inputs["price"], inputs["size"], inputs["num_bedrooms"],
-            inputs["num_bathrooms"], inputs["balcony"], inputs["parking"], inputs["floor"],
-            confirmed_features, embedding, [img.name for img in inputs["uploaded_images"]]
-        )
-        entry["combined_text"] = combined_text
-
-        # Save the entry
-        st.session_state.entries.append(entry)
-
-        # Reset state for next entry
-        st.session_state.pending_features = None
-        st.session_state.form_inputs = {}
-
-        st.success("✅ Entry saved.")
-        st.json(entry)
+    
+    # Center-aligned Finalize Entry button
+    col1, col2, col3 = st.columns([1, 2, 1])  # Adjust ratios as needed
+    with col2:
+        if st.button("Finalize Entry"):
+            inputs = st.session_state.form_inputs
+    
+            # Generate final description
+            combined_text = generate_combined_text(
+                inputs["title"], inputs["short_description"], inputs["location"],
+                inputs["price"], inputs["size"], inputs["num_bedrooms"],
+                inputs["num_bathrooms"], inputs["balcony"], inputs["parking"], inputs["floor"],
+                detected_features=confirmed_features
+            )
+    
+            embedding = model.encode(combined_text)
+    
+            entry = create_property_entry(
+                inputs["title"], inputs["short_description"], inputs["location"],
+                inputs["price"], inputs["size"], inputs["num_bedrooms"],
+                inputs["num_bathrooms"], inputs["balcony"], inputs["parking"], inputs["floor"],
+                confirmed_features, embedding, [img.name for img in inputs["uploaded_images"]]
+            )
+            entry["combined_text"] = combined_text
+    
+            # Save the entry
+            st.session_state.entries.append(entry)
+    
+            # Reset state for next entry
+            st.session_state.pending_features = None
+            st.session_state.form_inputs = {}
+    
+            st.success("✅ Entry saved.")
+            st.json(entry)
 
