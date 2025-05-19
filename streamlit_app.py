@@ -5,6 +5,7 @@ import google.generativeai as palm
 from sentence_transformers import SentenceTransformer
 
 import base64 # for image alignment 
+import io
 
 from utils.features import extract_features, generate_combined_text
 from utils.database import create_property_entry
