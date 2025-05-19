@@ -83,42 +83,46 @@ elif st.session_state.pending_features is not None:
         end = (img_idx + 1) * features_per_image if img_idx < num_images - 1 else len(features)
         image_features = features[start:end]
     
+        # Clean container with top spacing
         with st.container():
-            st.markdown(
-                """
-                <style>
-                .feature-card {
-                    border: 1px solid rgba(255, 255, 255, 0.15);
-                    border-radius: 12px;
-                    padding: 1.5rem;
-                    margin-bottom: 2rem;
-                    background-color: rgba(255, 255, 255, 0.03);
-                }
-                </style>
-                <div class='feature-card'>
-                """,
-                unsafe_allow_html=True
-            )
+            col_img, col_feats = st.columns([1, 2], gap="large")
     
-            col_img, col_feats = st.columns([1, 2])
-    
+            # Image column
             with col_img:
-                st.image(image_file, width=300)
+                st.image(image_file, width=260)
     
+            # Features column inside a styled markdown block
             with col_feats:
+                st.markdown(
+                    """
+                    <div style="
+                        border: 1px solid rgba(255,255,255,0.1);
+                        border-radius: 12px;
+                        padding: 1rem 1.5rem;
+                        background-color: rgba(255,255,255,0.03);
+                        margin-top: 0.5rem;
+                    ">
+                    """,
+                    unsafe_allow_html=True
+                )
+    
                 for feat_idx, feature in enumerate(image_features):
                     label = feature["item"]
                     description = feature["description"]
                     key = f"feature_{img_idx}_{feat_idx}_{label}"
     
-                    included = st.checkbox(label, value=True, key=key)
+                    included = st.checkbox(f"**{label}**", value=True, key=key)
                     if included:
                         confirmed_features.append(feature)
     
                     st.caption(description)
-                    st.markdown("<hr style='margin-top: 0.25rem; margin-bottom: 0.75rem;'>", unsafe_allow_html=True)
+                    if feat_idx < len(image_features) - 1:
+                        st.markdown("<hr style='margin-top: 0.25rem; margin-bottom: 0.75rem;'>", unsafe_allow_html=True)
     
-            st.markdown("</div>", unsafe_allow_html=True)
+                st.markdown("</div>", unsafe_allow_html=True)
+    
+        st.markdown("---")  # Separate image/feature blocks
+
 
 
 
