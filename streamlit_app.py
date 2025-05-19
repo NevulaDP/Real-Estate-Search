@@ -83,40 +83,43 @@ elif st.session_state.pending_features is not None:
         end = (img_idx + 1) * features_per_image if img_idx < num_images - 1 else len(features)
         image_features = features[start:end]
     
-        # --- Start Container ---
-        st.markdown(
-            """
-            <div style='
-                border: 1px solid rgba(255, 255, 255, 0.1);
-                border-radius: 12px;
-                padding: 1.5rem;
-                margin-bottom: 1.5rem;
-                background-color: rgba(255, 255, 255, 0.02);
-            '>
-            """,
-            unsafe_allow_html=True
-        )
+        with st.container():
+            st.markdown(
+                """
+                <style>
+                .feature-card {
+                    border: 1px solid rgba(255, 255, 255, 0.15);
+                    border-radius: 12px;
+                    padding: 1.5rem;
+                    margin-bottom: 2rem;
+                    background-color: rgba(255, 255, 255, 0.03);
+                }
+                </style>
+                <div class='feature-card'>
+                """,
+                unsafe_allow_html=True
+            )
     
-        col_img, col_feats = st.columns([1, 2])
+            col_img, col_feats = st.columns([1, 2])
     
-        with col_img:
-            st.image(image_file, width=300)
+            with col_img:
+                st.image(image_file, width=300)
     
-        with col_feats:
-            for feat_idx, feature in enumerate(image_features):
-                label = feature["item"]
-                description = feature["description"]
-                key = f"feature_{img_idx}_{feat_idx}_{label}"
+            with col_feats:
+                for feat_idx, feature in enumerate(image_features):
+                    label = feature["item"]
+                    description = feature["description"]
+                    key = f"feature_{img_idx}_{feat_idx}_{label}"
     
-                included = st.checkbox(label, value=True, key=key)
-                if included:
-                    confirmed_features.append(feature)
+                    included = st.checkbox(label, value=True, key=key)
+                    if included:
+                        confirmed_features.append(feature)
     
-                st.caption(description)
-                st.markdown("<hr style='margin-top: 0.25rem; margin-bottom: 0.75rem;'>", unsafe_allow_html=True)
+                    st.caption(description)
+                    st.markdown("<hr style='margin-top: 0.25rem; margin-bottom: 0.75rem;'>", unsafe_allow_html=True)
     
-        # --- End Container ---
-        st.markdown("</div>", unsafe_allow_html=True)
+            st.markdown("</div>", unsafe_allow_html=True)
+
 
 
 
