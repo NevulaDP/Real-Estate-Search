@@ -76,12 +76,21 @@ elif st.session_state.pending_features is not None:
 
     confirmed_features = []
 
-    for feature in st.session_state.pending_features:
-        st.write("🔍 Single feature:", feature)  # Optional debug
-        label = f"{feature['item']}" # -> include if necessry {feature['description']}"
-        tooltip = feature['description']
-        if st.checkbox(label, value=True, key=label + str(uuid.uuid4())):
-            confirmed_features.append(feature)
+    for idx, feature in enumerate(st.session_state.pending_features):
+        label = feature["item"]
+        description = feature["description"]
+        key = f"feature_{idx}_{label}"
+    
+        with st.container():
+            # Checkbox appears first
+            if st.checkbox(label, value=True, key=key):
+                confirmed_features.append(feature)
+    
+            # Description in smaller, subtler font
+            st.caption(description)
+    
+            # Divider between items
+            st.markdown("---")
 
     if st.button("Finalize Entry"):
         inputs = st.session_state.form_inputs
