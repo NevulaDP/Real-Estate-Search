@@ -3,12 +3,32 @@ from PIL import Image
 import io
 import base64
 import json
-import google.generativeai as palm
 
-def extract_features(image_file, _):
-  {"item": "Modern Lamp", "description": "A sleek lamp with LED light."},
-  {"item": "Bookshelf", "description": "Wooden bookshelf with five shelves."}
-  return []
+def extract_features(image_file, client):
+    """Extract visual features from an image using Gemini and return confirmed ones."""
+    try:
+        image = Image.open(image_file).convert("RGB")
+        buffered = io.BytesIO()
+        image.save(buffered, format="JPEG")
+        img_str = base64.b64encode(buffered.getvalue()).decode("utf-8")
+
+        prompt = f"""
+        Analyze the following image and identify key household items beneficial for buyers.
+        Return a JSON array of objects with 'item' and 'description' keys.
+        Image data: {img_str}
+        """
+
+        model = palm.GenerativeModel(model_name="gemini-2.0-flash")
+        response = model.generate_content(prompt)
+        st.write("🧠 Gemini raw response:", response.text)  # DEBUG LINE
+        try:
+            return json.loads(response.text)
+        except json.JSONDecodeError:
+            st.warning("⚠️ Could not parse Gemini response as JSON.")
+            return []
+    except Exception as e:
+        st.error(f"Gemini API call failed: {e}")
+        return []
 
 def generate_combined_text(
     title,
