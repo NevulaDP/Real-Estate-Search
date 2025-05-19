@@ -7,79 +7,105 @@ from sentence_transformers import SentenceTransformer
 from utils.features import extract_features, generate_combined_text
 from utils.database import create_property_entry
 
-# Configure Gemini API key
+# Configure Gemini
 palm.configure(api_key=st.secrets["GOOGLE_API_KEY"])
 
-# Load the embedding model once
 @st.cache_resource
 def load_embedding_model():
     return SentenceTransformer("all-MiniLM-L6-v2")
 
 model = load_embedding_model()
 
-# Initialize session storage for entries
+# Init session states
 if "entries" not in st.session_state:
     st.session_state.entries = []
 
+if "pending_features" not in st.session_state:
+    st.session_state.pending_features = None
+
+if "form_inputs" not in st.session_state:
+    st.session_state.form_inputs = {}
+
 st.title("🏡 Property Entry Uploader")
 
-# --- Entry Form ---
-with st.form("property_form"):
-    title = st.text_input("Title")
-    short_description = st.text_area("Short Description")
-    location = st.text_input("Location")
-    price = st.number_input("Price ($)", step=1000)
-    size = st.number_input("Size (sq ft)", step=10)
-    num_bedrooms = st.number_input("Number of Bedrooms", step=1)
-    num_bathrooms = st.number_input("Number of Bathrooms", step=1)
-    balcony = st.checkbox("Balcony")
-    parking = st.checkbox("Parking")
-    floor = st.number_input("Floor Number", step=1)
-    uploaded_images = st.file_uploader("Upload Image(s)", type=["jpg", "jpeg", "png"], accept_multiple_files=True)
+# --- PHASE 1: Form submission & feature extraction ---
+if st.session_state.pending_features is None:
+    with st.form("property_form"):
+        title = st.text_input("Title")
+        short_description = st.text_area("Short Description")
+        location = st.text_input("Location")
+        price = st.number_input("Price ($)", step=1000)
+        size = st.number_input("Size (sq ft)", step=10)
+        num_bedrooms = st.number_input("Number of Bedrooms", step=1)
+        num_bathrooms = st.number_input("Number of Bathrooms", step=1)
+        balcony = st.checkbox("Balcony")
+        parking = st.checkbox("Parking")
+        floor = st.number_input("Floor Number", step=1)
+        uploaded_images = st.file_uploader("Upload Image(s)", type=["jpg", "jpeg", "png"], accept_multiple_files=True)
 
-    submitted = st.form_submit_button("Submit Entry")
+        submitted = st.form_submit_button("Submit Entry")
 
-# --- On Submit ---
-if submitted and uploaded_images:
-    st.info("Processing images with Gemini...")
+    if submitted and uploaded_images:
+        all_features = []
 
-    all_features = []
+        for image_file in uploaded_images:
+            st.info(f"🔍 Analyzing: {image_file.name}")
+            items = extract_features(image_file, palm)
+            all_features.extend(items)
 
-    for image_file in uploaded_images:
-        st.info(f"🔍 Analyzing: {image_file.name}")
-        items = extract_features(image_file, palm)
+        # Save inputs and features for confirmation phase
+        st.session_state.pending_features = all_features
+        st.session_state.form_inputs = {
+            "title": title,
+            "short_description": short_description,
+            "location": location,
+            "price": price,
+            "size": size,
+            "num_bedrooms": num_bedrooms,
+            "num_bathrooms": num_bathrooms,
+            "balcony": balcony,
+            "parking": parking,
+            "floor": floor,
+            "uploaded_images": uploaded_images
+        }
 
-        # Let user confirm detected features
-        for item in items:
-            label = f"✅ {item['item']}: {item['description']}"
-            if st.checkbox(label, value=True, key=item['item'] + str(uuid.uuid4())):
-                all_features.append(item)
+        st.experimental_rerun()
 
-    # Generate combined property description
-    final_text = generate_combined_text(
-        title, short_description, location, price, size,
-        num_bedrooms, num_bathrooms, balcony, parking, floor,
-        detected_features=all_features
-    )
+# --- PHASE 2: Confirm features, then save entry ---
+elif st.session_state.pending_features is not None:
+    st.subheader("✅ Confirm Extracted Features")
+    confirmed_features = []
 
-    st.success("✅ Combined Description Generated")
-    st.subheader("📄 Description")
-    st.write(final_text)
+    for feature in st.session_state.pending_features:
+        label = f"{feature['item']}: {feature['description']}"
+        if st.checkbox(label, value=True, key=label + str(uuid.uuid4())):
+            confirmed_features.append(feature)
 
-    # Create embedding
-    embedding = model.encode(final_text)
+    if st.button("Finalize Entry"):
+        inputs = st.session_state.form_inputs
 
-    # Create entry object
-    entry = create_property_entry(
-        title, short_description, location, price, size,
-        num_bedrooms, num_bathrooms, balcony, parking, floor,
-        all_features, embedding, [img.name for img in uploaded_images]
-    )
-    entry["combined_text"] = final_text  # Optional
+        # Generate final description
+        combined_text = generate_combined_text(
+            inputs["title"], inputs["short_description"], inputs["location"],
+            inputs["price"], inputs["size"], inputs["num_bedrooms"],
+            inputs["num_bathrooms"], inputs["balcony"], inputs["parking"], inputs["floor"],
+            detected_features=confirmed_features
+        )
 
-    # Store entry in memory (session)
-    st.session_state.entries.append(entry)
+        embedding = model.encode(combined_text)
 
-    st.success("📌 Entry Saved (Session Only)")
-    st.text(f"Total entries: {len(st.session_state.entries)}")
-    st.json(entry)
+        entry = create_property_entry(
+            inputs["title"], inputs["short_description"], inputs["location"],
+            inputs["price"], inputs["size"], inputs["num_bedrooms"],
+            inputs["num_bathrooms"], inputs["balcony"], inputs["parking"], inputs["floor"],
+            confirmed_features, embedding, [img.name for img in inputs["uploaded_images"]]
+        )
+        entry["combined_text"] = combined_text
+
+        st.session_state.entries.append(entry)
+
+        # Reset flow
+        st.session_state.pending_features = None
+        st.session_state.form_inputs = {}
+        st.success("✅ Entry saved.")
+        st.json(entry)
