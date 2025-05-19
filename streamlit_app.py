@@ -72,11 +72,18 @@ if st.session_state.pending_features is None:
     
             st.rerun()
 # --- PHASE 2: Confirm features, then save entry ---
+# --- PHASE 2: Confirm features, then save entry ---
 elif st.session_state.pending_features is not None:
     st.subheader("✅ Confirm Extracted Features")
+
+    # 🧪 Add debug logs
+    st.write("📦 Raw features from session:", st.session_state.pending_features)
+    st.code(f"type: {type(st.session_state.pending_features)} | length: {len(st.session_state.pending_features)}")
+
     confirmed_features = []
 
     for feature in st.session_state.pending_features:
+        st.write("🔍 Single feature:", feature)  # Optional debug
         label = f"{feature['item']}: {feature['description']}"
         if st.checkbox(label, value=True, key=label + str(uuid.uuid4())):
             confirmed_features.append(feature)
@@ -102,10 +109,13 @@ elif st.session_state.pending_features is not None:
         )
         entry["combined_text"] = combined_text
 
+        # Save the entry
         st.session_state.entries.append(entry)
 
-        # Reset flow
+        # Reset state for next entry
         st.session_state.pending_features = None
         st.session_state.form_inputs = {}
+
         st.success("✅ Entry saved.")
         st.json(entry)
+
