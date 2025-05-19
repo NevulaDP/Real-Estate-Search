@@ -71,40 +71,40 @@ if st.session_state.pending_features is None:
 # --- PHASE 2: Confirm features, then save entry ---
 elif st.session_state.pending_features is not None:
     confirmed_features = []
-        features = st.session_state.pending_features
-        uploaded_images = st.session_state.form_inputs.get("uploaded_images", [])
-        
-        # Divide features evenly across images
-        num_images = len(uploaded_images)
-        features_per_image = len(features) // num_images if num_images else len(features)
-        
-        for img_idx, image_file in enumerate(uploaded_images):
-            start = img_idx * features_per_image
-            end = (img_idx + 1) * features_per_image if img_idx < num_images - 1 else len(features)
-            image_features = features[start:end]
-        
-            col_img, col_feats = st.columns([1, 2])
-        
-            # LEFT: Larger image
-            with col_img:
-                st.image(image_file, width=300)
-        
-            # RIGHT: Inline checkbox + label, clean style
-            with col_feats:
-                for feat_idx, feature in enumerate(image_features):
-                    label = feature["item"]
-                    description = feature["description"]
-                    key = f"feature_{img_idx}_{feat_idx}_{label}"
-        
-                    # Checkbox inline with label
-                    included = st.checkbox(label, value=True, key=key)
-                    if included:
-                        confirmed_features.append(feature)
-        
-                    st.caption(description)
-                    st.markdown("<hr style='margin-top: 0.25rem; margin-bottom: 0.75rem;'>", unsafe_allow_html=True)
-        
-            st.markdown("---")  # separator between image blocks
+    features = st.session_state.pending_features
+    uploaded_images = st.session_state.form_inputs.get("uploaded_images", [])
+    
+    # Divide features evenly across images
+    num_images = len(uploaded_images)
+    features_per_image = len(features) // num_images if num_images else len(features)
+    
+    for img_idx, image_file in enumerate(uploaded_images):
+        start = img_idx * features_per_image
+        end = (img_idx + 1) * features_per_image if img_idx < num_images - 1 else len(features)
+        image_features = features[start:end]
+    
+        col_img, col_feats = st.columns([1, 2])
+    
+        # LEFT: Larger image
+        with col_img:
+            st.image(image_file, width=300)
+    
+        # RIGHT: Inline checkbox + label, clean style
+        with col_feats:
+            for feat_idx, feature in enumerate(image_features):
+                label = feature["item"]
+                description = feature["description"]
+                key = f"feature_{img_idx}_{feat_idx}_{label}"
+    
+                # Checkbox inline with label
+                included = st.checkbox(label, value=True, key=key)
+                if included:
+                    confirmed_features.append(feature)
+    
+                st.caption(description)
+                st.markdown("<hr style='margin-top: 0.25rem; margin-bottom: 0.75rem;'>", unsafe_allow_html=True)
+    
+        st.markdown("---")  # separator between image blocks
 
 
     if st.button("Finalize Entry"):
