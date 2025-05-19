@@ -70,13 +70,11 @@ if st.session_state.pending_features is None:
                 st.rerun()
 # --- PHASE 2: Confirm features, then save entry ---
 elif st.session_state.pending_features is not None:
-    st.subheader("✅ Confirm Extracted Features")
-    
     confirmed_features = []
     features = st.session_state.pending_features
     uploaded_images = st.session_state.form_inputs.get("uploaded_images", [])
     
-    # Simple mapping: even split of features per image
+    # Divide features evenly across images
     num_images = len(uploaded_images)
     features_per_image = len(features) // num_images if num_images else len(features)
     
@@ -85,29 +83,29 @@ elif st.session_state.pending_features is not None:
         end = (img_idx + 1) * features_per_image if img_idx < num_images - 1 else len(features)
         image_features = features[start:end]
     
-        # Start horizontal row
-        col_img, col_feats = st.columns([1, 3])
+        col_img, col_feats = st.columns([1, 2])
     
-        # LEFT: Image (only once per group)
+        # LEFT: Larger image
         with col_img:
-            st.image(image_file, use_container_width=True)
+            st.image(image_file, width=300)
     
-        # RIGHT: All features for this image
+        # RIGHT: Inline checkbox + label, clean style
         with col_feats:
             for feat_idx, feature in enumerate(image_features):
                 label = feature["item"]
                 description = feature["description"]
                 key = f"feature_{img_idx}_{feat_idx}_{label}"
     
-                st.markdown(f"**{label}**")
-                st.caption(description)
-                if st.checkbox("✅ Include this feature", value=True, key=key):
+                # Checkbox inline with label
+                included = st.checkbox(label, value=True, key=key)
+                if included:
                     confirmed_features.append(feature)
     
-                st.markdown("<hr style='margin-top: 0.5rem; margin-bottom: 0.5rem;'>", unsafe_allow_html=True)
+                st.caption(description)
+                st.markdown("<hr style='margin-top: 0.25rem; margin-bottom: 0.75rem;'>", unsafe_allow_html=True)
     
-        # Spacer between image-feature rows
-        st.markdown("---")
+        st.markdown("---")  # separator between image blocks
+
 
     if st.button("Finalize Entry"):
         inputs = st.session_state.form_inputs
