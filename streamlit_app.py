@@ -73,24 +73,29 @@ if st.session_state.pending_features is None:
 # --- PHASE 2: Confirm features, then save entry ---
 elif st.session_state.pending_features is not None:
     st.subheader("✅ Confirm Extracted Features")
-
-    confirmed_features = []
-
+    
+    uploaded_images = st.session_state.form_inputs.get("uploaded_images", [])
+    
+    # Display one image alongside each group of ~5 features (or reuse same image for all)
+    image_preview = uploaded_images[0] if uploaded_images else None
+    
     for idx, feature in enumerate(st.session_state.pending_features):
         label = feature["item"]
         description = feature["description"]
         key = f"feature_{idx}_{label}"
     
-        with st.container():
-            # Checkbox appears first
-            if st.checkbox(label, value=True, key=key):
-                confirmed_features.append(feature)
+        col1, col2 = st.columns([1, 5])  # 1: thumbnail, 5: feature block
     
-            # Description in smaller, subtler font
-            st.caption(description)
+        with col1:
+            if image_preview:
+                st.image(image_preview, width=100)
     
-            # Divider between items
-            st.markdown("---")
+        with col2:
+            with st.container():
+                if st.checkbox(label, value=True, key=key):
+                    confirmed_features.append(feature)
+                st.caption(description)
+                st.markdown("<hr style='margin-top: 0.25rem; margin-bottom: 1rem;'>", unsafe_allow_html=True)
 
     if st.button("Finalize Entry"):
         inputs = st.session_state.form_inputs
