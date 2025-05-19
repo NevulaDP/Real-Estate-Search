@@ -73,7 +73,7 @@ if st.session_state.pending_features is None:
 # --- PHASE 2: Confirm features, then save entry ---
 elif st.session_state.pending_features is not None:
     st.subheader("✅ Confirm Extracted Features")
-    
+    confirmed_features = []
     uploaded_images = st.session_state.form_inputs.get("uploaded_images", [])
     
     # Display one image alongside each group of ~5 features (or reuse same image for all)
