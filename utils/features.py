@@ -19,11 +19,12 @@ def extract_features(image_file, client):
         """
 
         st.info("📤 Sending image and prompt to Gemini...")
-        response = client.models.generate_content(
-            model="gemini-2.0-flash",
-            contents=[image, prompt],
-            config={"response_mime_type": "application/json"}
+        model = client.GenerativeModel("gemini-2.0-flash")
+        response = model.generate_content(
+            contents=[prompt, image],
+            generation_config={"response_mime_type": "application/json"}
         )
+
 
         st.code(f"🔁 Gemini raw response type: {type(response)}")
         st.code(f"🧠 Gemini response.text: {response.text}")
