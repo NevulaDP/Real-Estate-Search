@@ -69,7 +69,6 @@ if st.session_state.pending_features is None:
                 }
                 st.rerun()
 # --- PHASE 2: Confirm features, then save entry ---
-# --- PHASE 2: Confirm features, then save entry ---
 elif st.session_state.pending_features is not None:
     st.subheader("✅ Confirm Extracted Features")
     
@@ -77,37 +76,38 @@ elif st.session_state.pending_features is not None:
     features = st.session_state.pending_features
     uploaded_images = st.session_state.form_inputs.get("uploaded_images", [])
     
-    # Estimate features per image (you can improve this if you store mapping)
+    # Simple mapping: even split of features per image
     num_images = len(uploaded_images)
     features_per_image = len(features) // num_images if num_images else len(features)
     
-    for img_idx, image in enumerate(uploaded_images):
+    for img_idx, image_file in enumerate(uploaded_images):
         start = img_idx * features_per_image
         end = (img_idx + 1) * features_per_image if img_idx < num_images - 1 else len(features)
-        related_features = features[start:end]
+        image_features = features[start:end]
     
+        # Start horizontal row
         col_img, col_feats = st.columns([1, 3])
     
-        # LEFT COLUMN: image
+        # LEFT: Image (only once per group)
         with col_img:
-            st.image(image, use_container_width=True)
+            st.image(image_file, use_container_width=True)
     
-        # RIGHT COLUMN: features associated with this image
+        # RIGHT: All features for this image
         with col_feats:
-            for feat_idx, feature in enumerate(related_features):
+            for feat_idx, feature in enumerate(image_features):
                 label = feature["item"]
                 description = feature["description"]
                 key = f"feature_{img_idx}_{feat_idx}_{label}"
     
                 st.markdown(f"**{label}**")
                 st.caption(description)
-                if st.checkbox("Include this feature", value=True, key=key):
+                if st.checkbox("✅ Include this feature", value=True, key=key):
                     confirmed_features.append(feature)
     
                 st.markdown("<hr style='margin-top: 0.5rem; margin-bottom: 0.5rem;'>", unsafe_allow_html=True)
-
-
-
+    
+        # Spacer between image-feature rows
+        st.markdown("---")
 
     if st.button("Finalize Entry"):
         inputs = st.session_state.form_inputs
