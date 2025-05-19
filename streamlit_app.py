@@ -77,17 +77,16 @@ elif st.session_state.pending_features is not None:
     confirmed_features = []
     
     uploaded_images = st.session_state.form_inputs.get("uploaded_images", [])
-    image_preview = uploaded_images[0] if uploaded_images else None
     
-    # Layout: image left, features right
+    # Layout: images on the left, features on the right
     col_img, col_features = st.columns([1, 3])
     
-    # LEFT: show image only once
     with col_img:
-        if image_preview:
-            st.image(image_preview, use_column_width=True, caption="Uploaded Image")
+        if uploaded_images:
+            st.markdown("### Uploaded Images")
+            for img in uploaded_images:
+                st.image(img, use_container_width=True)
     
-    # RIGHT: show list of feature checkboxes
     with col_features:
         for idx, feature in enumerate(st.session_state.pending_features):
             label = feature["item"]
@@ -99,6 +98,7 @@ elif st.session_state.pending_features is not None:
     
             st.caption(description)
             st.markdown("<hr style='margin-top: 0.25rem; margin-bottom: 1rem;'>", unsafe_allow_html=True)
+
 
 
     if st.button("Finalize Entry"):
