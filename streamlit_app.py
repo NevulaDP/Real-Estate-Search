@@ -82,12 +82,20 @@ elif st.session_state.pending_features is not None:
         end = (img_idx + 1) * features_per_image if img_idx < num_images - 1 else len(features)
         image_features = features[start:end]
     
-        # Create a horizontal layout: image on left, features on right
         col_img, col_feats = st.columns([1.2, 3])
     
+        # LEFT COLUMN: Vertically centered image using flexbox
         with col_img:
-            st.image(image_file, width=300)
+            st.markdown(
+                """
+                <div style='display: flex; justify-content: center; align-items: center; height: 100%;'>
+                    <img src="data:image/jpeg;base64,%s" style="max-width: 100%%; border-radius: 6px;" />
+                </div>
+                """ % st.image(image_file, use_column_width=True, output_format="JPEG").image_data,
+                unsafe_allow_html=True
+            )
     
+        # RIGHT COLUMN: Features
         with col_feats:
             for feat_idx, feature in enumerate(image_features):
                 label = feature["item"]
@@ -100,9 +108,7 @@ elif st.session_state.pending_features is not None:
                 st.caption(description)
                 st.markdown("<hr style='margin-top: 0.25rem; margin-bottom: 0.75rem;'>", unsafe_allow_html=True)
     
-        # Add spacing between image-feature blocks
         st.markdown("<br><hr><br>", unsafe_allow_html=True)
-
 
 
     if st.button("Finalize Entry"):
