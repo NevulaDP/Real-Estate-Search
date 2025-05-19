@@ -18,7 +18,7 @@ def extract_features(image_file, client):
         Image data: {img_str[:150]}... (truncated)
         """
 
-        st.info("📤 Analyzing your property...")
+        #st.info("📤 Analyzing your property...")
         model = client.GenerativeModel("gemini-2.0-flash")
         response = model.generate_content(
             contents=[prompt, image],
