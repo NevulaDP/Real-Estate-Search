@@ -74,15 +74,12 @@ if st.session_state.pending_features is None:
 elif st.session_state.pending_features is not None:
     st.subheader("✅ Confirm Extracted Features")
 
-    # 🧪 Add debug logs
-    st.write("📦 Raw features from session:", st.session_state.pending_features)
-    st.code(f"type: {type(st.session_state.pending_features)} | length: {len(st.session_state.pending_features)}")
-
     confirmed_features = []
 
     for feature in st.session_state.pending_features:
         st.write("🔍 Single feature:", feature)  # Optional debug
-        label = f"{feature['item']}: {feature['description']}"
+        label = f"{feature['item']}" # -> include if necessry {feature['description']}"
+        tooltip = feature['description']
         if st.checkbox(label, value=True, key=label + str(uuid.uuid4())):
             confirmed_features.append(feature)
 
