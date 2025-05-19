@@ -83,7 +83,7 @@ elif st.session_state.pending_features is not None:
     
     with col_img:
         if uploaded_images:
-            st.markdown("### Uploaded Images")
+           # st.markdown("### Uploaded Images")
             for img in uploaded_images:
                 st.image(img, use_container_width=True)
     
