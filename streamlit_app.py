@@ -44,36 +44,33 @@ if st.session_state.pending_features is None:
         uploaded_images = st.file_uploader("Upload Image(s)", type=["jpg", "jpeg", "png"], accept_multiple_files=True)
 
         submitted = st.form_submit_button("Submit Entry")
-
+    # Only execute this if the form is submitted
         if submitted and uploaded_images:
             all_features = []
-        
+    
             for image_file in uploaded_images:
                 st.info(f"🔍 Analyzing: {image_file.name}")
                 items = extract_features(image_file, palm)
-        
-                st.write("Extracted from Gemini:", items)  # 🔍 Add this line
-        
+                st.write("Extracted from Gemini:", items)
                 all_features.extend(items)
-
-        # Save inputs and features for confirmation phase
-        st.session_state.pending_features = all_features
-        st.session_state.form_inputs = {
-            "title": title,
-            "short_description": short_description,
-            "location": location,
-            "price": price,
-            "size": size,
-            "num_bedrooms": num_bedrooms,
-            "num_bathrooms": num_bathrooms,
-            "balcony": balcony,
-            "parking": parking,
-            "floor": floor,
-            "uploaded_images": uploaded_images
-        }
-
-        st.rerun()
-
+    
+            # Save to session state for next step
+            st.session_state.pending_features = all_features
+            st.session_state.form_inputs = {
+                "title": title,
+                "short_description": short_description,
+                "location": location,
+                "price": price,
+                "size": size,
+                "num_bedrooms": num_bedrooms,
+                "num_bathrooms": num_bathrooms,
+                "balcony": balcony,
+                "parking": parking,
+                "floor": floor,
+                "uploaded_images": uploaded_images
+            }
+    
+            st.rerun()
 # --- PHASE 2: Confirm features, then save entry ---
 elif st.session_state.pending_features is not None:
     st.subheader("✅ Confirm Extracted Features")
