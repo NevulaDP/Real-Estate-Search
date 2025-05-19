@@ -116,7 +116,7 @@ elif st.session_state.pending_features is not None:
     col1, col2, col3 = st.columns([1, 0.5, 1])  # Adjust ratios as needed
     with col2:
         st.markdown("<div style='height: 10px'></div>", unsafe_allow_html=True)
-        if st.button("Finalize Entry"):
+        if st.button("Finalize Entry" ,use_container_width=True):
             inputs = st.session_state.form_inputs
     
             # Generate final description
