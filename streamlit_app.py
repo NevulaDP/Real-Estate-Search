@@ -51,7 +51,6 @@ if st.session_state.pending_features is None:
                 for image_file in uploaded_images:
                     st.info(f"🔍 Analyzing image: {image_file.name}")
                     items = extract_features(image_file, palm)  # uses the fixed version from features.py
-                    st.write("🧪 Features from Gemini:", items)  # debug output
                     all_features.extend(items)
                 
                 st.session_state.pending_features = all_features
