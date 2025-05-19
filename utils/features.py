@@ -18,14 +18,21 @@ def extract_features(image_file, client):
         Image data: {img_str}
         """
 
-        model = palm.GenerativeModel(model_name="gemini-2.0-flash")
-        response = model.generate_content(prompt)
-        st.write("🧠 Gemini raw response:", response.text)  # DEBUG LINE
+        # MATCHES COLAB
+        response = client.models.generate_content(
+            model="gemini-2.0-flash",
+            contents=[image, prompt],
+            config={"response_mime_type": "application/json"}
+        )
+
+        st.write("🧠 Gemini raw response:", response.text)
+
         try:
             return json.loads(response.text)
         except json.JSONDecodeError:
             st.warning("⚠️ Could not parse Gemini response as JSON.")
             return []
+
     except Exception as e:
         st.error(f"Gemini API call failed: {e}")
         return []
