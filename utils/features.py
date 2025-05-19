@@ -5,7 +5,7 @@ import base64
 import json
 
 def extract_features(image_file, client):
-    """Extract visual features from an image using Gemini and return confirmed ones."""
+    """Extract visual features from an image using Gemini."""
     try:
         image = Image.open(image_file).convert("RGB")
         buffered = io.BytesIO()
@@ -15,22 +15,24 @@ def extract_features(image_file, client):
         prompt = f"""
         Analyze the following image and identify key household items beneficial for buyers.
         Return a JSON array of objects with 'item' and 'description' keys.
-        Image data: {img_str}
+        Image data: {img_str[:150]}... (truncated)
         """
 
-        # MATCHES COLAB
+        st.info("📤 Sending image and prompt to Gemini...")
         response = client.models.generate_content(
             model="gemini-2.0-flash",
             contents=[image, prompt],
             config={"response_mime_type": "application/json"}
         )
 
-        st.write("🧠 Gemini raw response:", response.text)
+        st.code(f"🔁 Gemini raw response type: {type(response)}")
+        st.code(f"🧠 Gemini response.text: {response.text}")
 
         try:
-            return json.loads(response.text)
-        except json.JSONDecodeError:
-            st.warning("⚠️ Could not parse Gemini response as JSON.")
+            parsed = json.loads(response.text)
+            return parsed
+        except json.JSONDecodeError as e:
+            st.warning(f"⚠️ Failed to parse JSON: {e}")
             return []
 
     except Exception as e:
