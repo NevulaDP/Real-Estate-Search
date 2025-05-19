@@ -18,9 +18,14 @@ def extract_features(image_file, client):
         """
 
         response = client.generate_text(prompt=prompt)
-        return json.loads(response.text)
-
+        st.write("🧠 Gemini raw response:", response.text)  # DEBUG LINE
+        try:
+            return json.loads(response.text)
+        except json.JSONDecodeError:
+            st.warning("⚠️ Could not parse Gemini response as JSON.")
+            return []
     except Exception as e:
+        st.error(f"Gemini API call failed: {e}")
         return []
 
 def generate_combined_text(
