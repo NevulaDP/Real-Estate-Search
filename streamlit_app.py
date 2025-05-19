@@ -4,6 +4,8 @@ import uuid
 import google.generativeai as palm
 from sentence_transformers import SentenceTransformer
 
+import base64 # for image alignment 
+
 from utils.features import extract_features, generate_combined_text
 from utils.database import create_property_entry
 
@@ -13,6 +15,15 @@ palm.configure(api_key=st.secrets["GOOGLE_API_KEY"])
 @st.cache_resource
 def load_embedding_model():
     return SentenceTransformer("all-MiniLM-L6-v2")
+
+#image to base64
+def image_to_base64(image_file):
+    image = Image.open(image_file).convert("RGB")
+    buffered = io.BytesIO()
+    image.save(buffered, format="JPEG")
+    img_bytes = buffered.getvalue()
+    img_b64 = base64.b64encode(img_bytes).decode("utf-8")
+    return img_b64
 
 model = load_embedding_model()
 
