@@ -17,7 +17,8 @@ def extract_features(image_file, client):
         Image data: {img_str}
         """
 
-        response = client.generate_text(prompt=prompt)
+        model = palm.GenerativeModel(model_name="gemini-2.0-flash")
+        response = model.generate_content(prompt)
         st.write("🧠 Gemini raw response:", response.text)  # DEBUG LINE
         try:
             return json.loads(response.text)
