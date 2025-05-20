@@ -30,10 +30,9 @@ if "pending_features" not in st.session_state:
 if "form_inputs" not in st.session_state:
     st.session_state.form_inputs = {}
 
-st.title("🏡 Smarter Property Engine")
 
 # --- SIDEBAR ---#
-
+st.sidebar.markdown("## 🧠 Smarter Property Engine")
 st.sidebar.title("🔍 Navigation")
 mode = st.sidebar.radio("Go to:", ["🏡 Upload Property", "🔎 Search Properties"])
 
