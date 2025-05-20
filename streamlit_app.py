@@ -58,8 +58,10 @@ if mode == "🏡 Upload Property":
                 parking = st.checkbox("Parking")
                 floor = st.number_input("Floor Number", step=1)
                 uploaded_images = st.file_uploader("Upload Image(s)", type=["jpg", "jpeg", "png"], accept_multiple_files=True)
-        
-                submitted = st.form_submit_button("Submit Entry")
+                
+                col1, col2, col3 = st.columns([1, 2, 1])
+                with col2:
+                    submitted = st.form_submit_button("Submit Entry")
             # Only execute this if the form is submitted
                 if submitted and uploaded_images:
                         all_features = []
