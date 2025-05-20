@@ -38,6 +38,7 @@ st.sidebar.title("🔍 Navigation")
 mode = st.sidebar.radio("Go to:", ["🏡 Upload Property", "🔎 Search Properties"])
 
 if mode == "🏡 Upload Property":
+    st.title("🏡 Upload Property")
     # --- PHASE 1: Form submission & feature extraction ---
     if st.session_state.pending_features is None:
         with st.form("property_form"):
