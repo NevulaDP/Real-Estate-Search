@@ -8,7 +8,7 @@ from utils.features import extract_features, generate_combined_text
 from utils.database import create_property_entry
 from utils.hf_uploader import upload_image_to_hub, upload_json_to_hub
 from utils.hf_loader import load_entries_from_hub
-from utils.form_validation import validate_and_process_form
+#from utils.form_validation import validate_and_process_form
 
 # Configure Gemini
 palm.configure(api_key=st.secrets["GOOGLE_API_KEY"])
@@ -49,46 +49,56 @@ if mode == "🏡 Upload Property":
         with col2:
             with st.form("property_form"):
                 title = st.text_input("Title")
+                if submitted and not title.strip():
+                    st.warning("Title is required.", icon="⚠️")
+            
                 short_description = st.text_area("Short Description")
+                if submitted and not short_description.strip():
+                    st.warning("Short description is required.", icon="⚠️")
+            
                 location = st.text_input("Location")
-                price = st.number_input("Price ($)", step=1000)
-                size = st.number_input("Size (sq ft)", step=10)
-                num_bedrooms = st.number_input("Number of Bedrooms", step=1)
-                num_bathrooms = st.number_input("Number of Bathrooms", step=1)
+                if submitted and not location.strip():
+                    st.warning("Location is required.", icon="⚠️")
+            
+                price = st.number_input("Price ($)", min_value=0, step=1000)
+                if submitted and price <= 0:
+                    st.warning("Price must be greater than 0.", icon="⚠️")
+            
+                size = st.number_input("Size (sq ft)", min_value=0, step=10)
+                if submitted and size <= 0:
+                    st.warning("Size must be greater than 0.", icon="⚠️")
+            
+                num_bedrooms = st.number_input("Number of Bedrooms", min_value=0, step=1)
+                num_bathrooms = st.number_input("Number of Bathrooms", min_value=0, step=1)
+                floor = st.number_input("Floor Number", min_value=0, step=1)
+            
                 balcony = st.checkbox("Balcony")
                 parking = st.checkbox("Parking")
-                floor = st.number_input("Floor Number", step=1)
+            
                 uploaded_images = st.file_uploader("Upload Image(s)", type=["jpg", "jpeg", "png"], accept_multiple_files=True)
+                if submitted and not uploaded_images:
+                    st.warning("At least one image is required.", icon="⚠️")
                 
                 col1, col2, col3 = st.columns([1, 0.5, 1])
                 with col2:
                     submitted = st.form_submit_button("Submit Entry")
-                    if submitted:
-                        result, errors = validate_and_process_form(
-                            title, short_description, location, price, size,
-                            num_bedrooms, num_bathrooms, floor, uploaded_images,
-                            balcony, parking, extract_features, palm
-                        )
-                    
-                        if errors:
-                            for error in errors:
-                                st.warning(f"⚠️ {error}")
-                        else:
-                            all_features, form_inputs = result
-                            st.session_state.pending_features = all_features
-                            st.session_state.form_inputs = form_inputs
-                            st.rerun()
-
                 
-            # Only execute this if the form is submitted
-                if submitted and uploaded_images:
+                if submitted:
+                    if (
+                        title.strip()
+                        and short_description.strip()
+                        and location.strip()
+                        and price > 0
+                        and size > 0
+                        and uploaded_images
+                    ):
                         all_features = []
-        
+                
                         for image_file in uploaded_images:
                             st.info(f"📤 Analyzing {image_file.name}")
-                            items = extract_features(image_file, palm)  # uses the fixed version from features.py
+                            items = extract_features(image_file, palm)
                             all_features.extend(items)
-                        
+                
                         st.session_state.pending_features = all_features
                         st.session_state.form_inputs = {
                             "title": title,
