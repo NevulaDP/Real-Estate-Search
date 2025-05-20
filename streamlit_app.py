@@ -164,4 +164,34 @@ if mode == "🏡 Upload Property":
                 st.success("✅ Entry saved.")
                 st.json(entry)
 
+elif mode == "🔎 Search Properties":
+    st.title("🔎 Search Properties")
+
+    query = st.text_input("Describe what you're looking for:")
+    if st.button("Search"):
+        if query.strip():
+            query_embedding = model.encode(query)
+
+            # Do similarity search against loaded entries
+            results = []
+            for entry in st.session_state.entries:
+                entry_embedding = np.array(entry["embedding"])
+                score = np.dot(query_embedding, entry_embedding) / (
+                    np.linalg.norm(query_embedding) * np.linalg.norm(entry_embedding)
+                )
+                results.append((score, entry))
+
+            results.sort(reverse=True, key=lambda x: x[0])
+            top_results = results[:5]
+
+            for score, entry in top_results:
+                st.markdown(f"### 📌 {entry['title']} (Score: {score:.2f})")
+                st.markdown(entry["short_description"])
+                if entry["image_paths"]:
+                    st.image(entry["image_paths"][0], width=300)
+                st.markdown("---")
+        else:
+            st.warning("Please enter a search query.")
+
+
 
