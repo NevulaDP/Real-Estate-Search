@@ -37,7 +37,9 @@ st.sidebar.title("Property Matcher")
 mode = st.sidebar.radio("Go to:",["🏡 Upload Property", "🔎 Search Properties"])
 
 if mode == "🏡 Upload Property":
-    st.title("🏡 Upload Property")
+    col1, col2, col3 = st.columns([1, 2, 1])
+    with col2:
+        st.title("🏡 Upload Property")
     # --- PHASE 1: Form submission & feature extraction ---
     if st.session_state.pending_features is None:
                 # Centered form layout: [empty, main, empty]
