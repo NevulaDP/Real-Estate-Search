@@ -6,6 +6,8 @@ from sentence_transformers import SentenceTransformer
 
 from utils.features import extract_features, generate_combined_text
 from utils.database import create_property_entry
+from utils.hf_uploader import upload_image_to_hub, upload_json_to_hub
+from utils.hf_loader import load_entries_from_hub
 
 # Configure Gemini
 palm.configure(api_key=st.secrets["GOOGLE_API_KEY"])
@@ -18,7 +20,7 @@ model = load_embedding_model()
 
 # Init session states
 if "entries" not in st.session_state:
-    st.session_state.entries = []
+    st.session_state.entries = load_entries_from_hub()
 
 if "pending_features" not in st.session_state:
     st.session_state.pending_features = None
@@ -116,9 +118,9 @@ elif st.session_state.pending_features is not None:
     col1, col2, col3 = st.columns([1, 1, 1])  # Adjust ratios as needed
     with col2:
         st.markdown("<div style='height: 15px'></div>", unsafe_allow_html=True)
-        if st.button("Finalize Entry" ,use_container_width=True):
+        if st.button("Finalize Entry", use_container_width=True):
             inputs = st.session_state.form_inputs
-    
+        
             # Generate final description
             combined_text = generate_combined_text(
                 inputs["title"], inputs["short_description"], inputs["location"],
@@ -126,24 +128,31 @@ elif st.session_state.pending_features is not None:
                 inputs["num_bathrooms"], inputs["balcony"], inputs["parking"], inputs["floor"],
                 detected_features=confirmed_features
             )
-    
+        
             embedding = model.encode(combined_text)
-    
+            property_uuid = str(uuid.uuid4())
+        
+            # Upload each image to Hugging Face and collect URLs
+            image_urls = [upload_image_to_hub(img, property_uuid) for img in inputs["uploaded_images"]]
+        
             entry = create_property_entry(
+                property_uuid,
                 inputs["title"], inputs["short_description"], inputs["location"],
                 inputs["price"], inputs["size"], inputs["num_bedrooms"],
                 inputs["num_bathrooms"], inputs["balcony"], inputs["parking"], inputs["floor"],
-                confirmed_features, embedding, [img.name for img in inputs["uploaded_images"]]
+                confirmed_features, embedding, image_urls
             )
             entry["combined_text"] = combined_text
-    
-            # Save the entry
+        
+            # Save the entry and upload updated DB
             st.session_state.entries.append(entry)
-    
-            # Reset state for next entry
+            upload_json_to_hub(st.session_state.entries)
+        
+            # Reset session state
             st.session_state.pending_features = None
             st.session_state.form_inputs = {}
-    
+        
             st.success("✅ Entry saved.")
             st.json(entry)
+
 
