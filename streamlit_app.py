@@ -49,12 +49,10 @@ if mode == "🏡 Upload Property":
         with col2:
             with st.form("property_form"):
             
-                # Declare submit button early so `submitted` is known
-                colx1, colx2, colx3 = st.columns([1, 0.5, 1])
-                with colx2:
-                    submitted = st.form_submit_button("Submit Entry")
+                # Declare the button early for logic
+                submitted = st.form_submit_button("hidden_submit", type="primary")
             
-                # Now the inputs
+                # --- FORM INPUTS ---
                 title = st.text_input("Title")
                 if submitted and not title.strip():
                     st.warning("Title is required.", icon="⚠️")
@@ -79,7 +77,12 @@ if mode == "🏡 Upload Property":
                 if submitted and not uploaded_images:
                     st.warning("At least one image is required.", icon="⚠️")
             
-                # Now proceed only if all fields are valid
+                # Re-render the actual visible button at the bottom
+                colx1, colx2, colx3 = st.columns([1, 0.5, 1])
+                with colx2:
+                    st.form_submit_button("Submit Entry", type="primary")
+            
+                # Handle logic after form validation
                 if submitted and (
                     title.strip()
                     and short_description.strip()
@@ -109,6 +112,7 @@ if mode == "🏡 Upload Property":
                         "uploaded_images": uploaded_images
                     }
                     st.rerun()
+
 
     # --- PHASE 2: Confirm features, then save entry ---
     elif st.session_state.pending_features is not None:
