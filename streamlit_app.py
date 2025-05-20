@@ -43,77 +43,73 @@ if mode == "🏡 Upload Property":
         st.title("🏡 Upload Property")
     # --- PHASE 1: Form submission & feature extraction ---
     if st.session_state.pending_features is None:
-                # Centered form layout: [empty, main, empty]
+        # Centered form layout: [empty, main, empty]
         col1, col2, col3 = st.columns([1, 2, 1])
         
         with col2:
             with st.form("property_form"):
                 title = st.text_input("Title")
-                if submitted and not title.strip():
-                    st.warning("Title is required.", icon="⚠️")
-            
                 short_description = st.text_area("Short Description")
-                if submitted and not short_description.strip():
-                    st.warning("Short description is required.", icon="⚠️")
-            
                 location = st.text_input("Location")
-                if submitted and not location.strip():
-                    st.warning("Location is required.", icon="⚠️")
-            
                 price = st.number_input("Price ($)", min_value=0, step=1000)
-                if submitted and price <= 0:
-                    st.warning("Price must be greater than 0.", icon="⚠️")
-            
                 size = st.number_input("Size (sq ft)", min_value=0, step=10)
-                if submitted and size <= 0:
-                    st.warning("Size must be greater than 0.", icon="⚠️")
-            
                 num_bedrooms = st.number_input("Number of Bedrooms", min_value=0, step=1)
                 num_bathrooms = st.number_input("Number of Bathrooms", min_value=0, step=1)
                 floor = st.number_input("Floor Number", min_value=0, step=1)
-            
                 balcony = st.checkbox("Balcony")
                 parking = st.checkbox("Parking")
-            
                 uploaded_images = st.file_uploader("Upload Image(s)", type=["jpg", "jpeg", "png"], accept_multiple_files=True)
+        
+                colx1, colx2, colx3 = st.columns([1, 0.5, 1])
+                with colx2:
+                    submitted = st.form_submit_button("Submit Entry")
+        
+                # 🧠 Now it's safe to validate inline (after the button exists!)
+                if submitted and not title.strip():
+                    st.warning("Title is required.", icon="⚠️")
+                if submitted and not short_description.strip():
+                    st.warning("Short description is required.", icon="⚠️")
+                if submitted and not location.strip():
+                    st.warning("Location is required.", icon="⚠️")
+                if submitted and price <= 0:
+                    st.warning("Price must be greater than 0.", icon="⚠️")
+                if submitted and size <= 0:
+                    st.warning("Size must be greater than 0.", icon="⚠️")
                 if submitted and not uploaded_images:
                     st.warning("At least one image is required.", icon="⚠️")
-                
-                col1, col2, col3 = st.columns([1, 0.5, 1])
-                with col2:
-                    submitted = st.form_submit_button("Submit Entry")
-                
-                if submitted:
-                    if (
-                        title.strip()
-                        and short_description.strip()
-                        and location.strip()
-                        and price > 0
-                        and size > 0
-                        and uploaded_images
-                    ):
-                        all_features = []
-                
-                        for image_file in uploaded_images:
-                            st.info(f"📤 Analyzing {image_file.name}")
-                            items = extract_features(image_file, palm)
-                            all_features.extend(items)
-                
-                        st.session_state.pending_features = all_features
-                        st.session_state.form_inputs = {
-                            "title": title,
-                            "short_description": short_description,
-                            "location": location,
-                            "price": price,
-                            "size": size,
-                            "num_bedrooms": num_bedrooms,
-                            "num_bathrooms": num_bathrooms,
-                            "balcony": balcony,
-                            "parking": parking,
-                            "floor": floor,
-                            "uploaded_images": uploaded_images
-                        }
-                        st.rerun()
+        
+                # ✅ Proceed only if valid
+                if submitted and (
+                    title.strip()
+                    and short_description.strip()
+                    and location.strip()
+                    and price > 0
+                    and size > 0
+                    and uploaded_images
+                ):
+                    all_features = []
+        
+                    for image_file in uploaded_images:
+                        st.info(f"📤 Analyzing {image_file.name}")
+                        items = extract_features(image_file, palm)
+                        all_features.extend(items)
+        
+                    st.session_state.pending_features = all_features
+                    st.session_state.form_inputs = {
+                        "title": title,
+                        "short_description": short_description,
+                        "location": location,
+                        "price": price,
+                        "size": size,
+                        "num_bedrooms": num_bedrooms,
+                        "num_bathrooms": num_bathrooms,
+                        "balcony": balcony,
+                        "parking": parking,
+                        "floor": floor,
+                        "uploaded_images": uploaded_images
+                    }
+                    st.rerun()
+
     # --- PHASE 2: Confirm features, then save entry ---
     elif st.session_state.pending_features is not None:
         confirmed_features = []
