@@ -47,33 +47,37 @@ if mode == "🏡 Upload Property":
         st.session_state.upload_stage = "form"  # Reset for next round
 
         st.success("✅ Property submitted successfully!")
-        with st.container():
-            st.markdown(f"### 🏡 {entry['title']}")
-            st.markdown(f"*{entry['short_description']}*")
-            st.markdown(f"📍 **Location:** {entry['location']}")
-            st.markdown(f"💰 **Price:** ${entry['price']:,}")
-            st.markdown(f"🛏️ **Bedrooms:** {entry['num_bedrooms']}  |  🛁 **Bathrooms:** {entry['num_bathrooms']}  |  🏢 **Floor:** {entry['floor']}")
-            st.markdown(f"📐 **Size:** {entry['size']} sq ft")
-
-            extras = []
-            if entry['balcony']:
-                extras.append("🪟 Balcony")
-            if entry['parking']:
-                extras.append("🅿️ Parking")
-            if extras:
-                st.markdown("🔧 **Extras:** " + ", ".join(extras))
-
-            if entry["detected_features"]:
-                st.markdown("### 🧠 Detected Features")
-                for f in entry["detected_features"]:
-                    st.markdown(f"- **{f['item']}**: {f['description']}")
-
-            if entry["image_paths"]:
-                st.markdown("### 🖼️ Uploaded Images")
-                cols = st.columns(min(3, len(entry["image_paths"])))
-                for i, img_url in enumerate(entry["image_paths"]):
-                    with cols[i % len(cols)]:
-                        st.image(img_url, use_container_width=True)
+        
+         # Center the confirmation inside a full-width container
+        col1, col2, col3 = st.columns([1, 2, 1])
+        with col2:
+            with st.container():
+                st.markdown(f"### 🏡 {entry['title']}")
+                st.markdown(f"*{entry['short_description']}*")
+                st.markdown(f"📍 **Location:** {entry['location']}")
+                st.markdown(f"💰 **Price:** ${entry['price']:,}")
+                st.markdown(f"🛏️ **Bedrooms:** {entry['num_bedrooms']}  |  🛁 **Bathrooms:** {entry['num_bathrooms']}  |  🏢 **Floor:** {entry['floor']}")
+                st.markdown(f"📐 **Size:** {entry['size']} sq ft")
+    
+                extras = []
+                if entry['balcony']:
+                    extras.append("🪟 Balcony")
+                if entry['parking']:
+                    extras.append("🅿️ Parking")
+                if extras:
+                    st.markdown("🔧 **Extras:** " + ", ".join(extras))
+    
+                if entry["detected_features"]:
+                    st.markdown("### 🧠 Detected Features")
+                    for f in entry["detected_features"]:
+                        st.markdown(f"- **{f['item']}**: {f['description']}")
+    
+                if entry["image_paths"]:
+                    st.markdown("### 🖼️ Uploaded Images")
+                    cols = st.columns(min(3, len(entry["image_paths"])))
+                    for i, img_url in enumerate(entry["image_paths"]):
+                        with cols[i % len(cols)]:
+                            st.image(img_url, use_container_width=True)
 
         st.stop()
 
