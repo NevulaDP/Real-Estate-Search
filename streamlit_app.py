@@ -18,7 +18,7 @@ def load_embedding_model():
 
 model = load_embedding_model()
 
-st.set_page_config(page_title="Property Matcher", layout="wide")
+st.set_page_config(page_title="Property Matcher", layout="narrow")
 
 # Init session states
 if "entries" not in st.session_state:
