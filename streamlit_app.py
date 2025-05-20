@@ -8,6 +8,7 @@ from utils.features import extract_features, generate_combined_text
 from utils.database import create_property_entry
 from utils.hf_uploader import upload_image_to_hub, upload_json_to_hub
 from utils.hf_loader import load_entries_from_hub
+from utils.form_validation import validate_and_process_form
 
 # Configure Gemini
 palm.configure(api_key=st.secrets["GOOGLE_API_KEY"])
@@ -62,6 +63,23 @@ if mode == "🏡 Upload Property":
                 col1, col2, col3 = st.columns([1, 0.5, 1])
                 with col2:
                     submitted = st.form_submit_button("Submit Entry")
+                    if submitted:
+                        result, errors = validate_and_process_form(
+                            title, short_description, location, price, size,
+                            num_bedrooms, num_bathrooms, floor, uploaded_images,
+                            balcony, parking, extract_features, palm
+                        )
+                    
+                        if errors:
+                            for error in errors:
+                                st.warning(f"⚠️ {error}")
+                        else:
+                            all_features, form_inputs = result
+                            st.session_state.pending_features = all_features
+                            st.session_state.form_inputs = form_inputs
+                            st.rerun()
+
+                
             # Only execute this if the form is submitted
                 if submitted and uploaded_images:
                         all_features = []
