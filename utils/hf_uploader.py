@@ -1,3 +1,5 @@
+import json
+
 def upload_image_to_hub(image_file, property_uuid, save_dir="temp_images"):
     import os
     from huggingface_hub import upload_file
@@ -21,3 +23,15 @@ def upload_image_to_hub(image_file, property_uuid, save_dir="temp_images"):
     )
 
     return f"https://huggingface.co/datasets/{HF_REPO_ID}/resolve/main/{hf_path}"
+
+def upload_json_to_hub(entries, filename="property_db.json"):
+    with open(filename, "w") as f:
+        json.dump(entries, f)
+
+    upload_file(
+        path_or_fileobj=filename,
+        path_in_repo=filename,
+        repo_id=HF_REPO_ID,
+        repo_type="dataset",
+        token=HF_TOKEN
+    )
