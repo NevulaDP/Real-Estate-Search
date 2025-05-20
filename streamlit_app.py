@@ -18,6 +18,8 @@ def load_embedding_model():
 
 model = load_embedding_model()
 
+st.set_page_config(page_title="Property Matcher", layout="wide")
+
 # Init session states
 if "entries" not in st.session_state:
     st.session_state.entries = load_entries_from_hub()
@@ -31,7 +33,6 @@ if "form_inputs" not in st.session_state:
 st.title("🏡 Smarter Property Engine")
 
 # --- SIDEBAR ---#
-st.set_page_config(page_title="Property Matcher", layout="wide")
 
 st.sidebar.title("🔍 Navigation")
 mode = st.sidebar.radio("Go to:", ["🏡 Upload Property", "🔎 Search Properties"])
