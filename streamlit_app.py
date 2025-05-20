@@ -16,6 +16,9 @@ palm.configure(api_key=st.secrets["GOOGLE_API_KEY"])
 @st.cache_resource
 def load_embedding_model():
     return SentenceTransformer("all-MiniLM-L6-v2")
+#Required astrisks
+def required_label(text):
+    return f"**{text}** <span style='color:red;'>*</span>"
 
 model = load_embedding_model()
 
@@ -48,7 +51,8 @@ if mode == "🏡 Upload Property":
         
         with col2:
             with st.form("property_form"):
-                            title = st.text_input("Title")
+                            st.markdown(required_label("Title"), unsafe_allow_html=True)
+                            title = st.text_input("", key="title_input")
                             short_description = st.text_area("Short Description")
                             location = st.text_input("Location")
                             price = st.number_input("Price ($)", min_value=1, step=1000)
