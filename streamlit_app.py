@@ -58,7 +58,7 @@ if mode == "🏡 Upload Property":
                             floor = st.number_input("Floor Number", min_value=0, step=1)
                             balcony = st.checkbox("Balcony")
                             parking = st.checkbox("Parking")
-                            uploaded_images = st.file_uploader("Upload Image(s)", type=["jpg", "jpeg", "png"], accept_multiple_files=True)
+                            uploaded_images = st.file_uploader("Upload Image(s) *", type=["jpg", "jpeg", "png"], accept_multiple_files=True)
                     
                             colx1, colx2, colx3 = st.columns([1, 0.5, 1])
                             with colx2:
