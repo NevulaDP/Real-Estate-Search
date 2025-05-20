@@ -59,7 +59,7 @@ if mode == "🏡 Upload Property":
                 floor = st.number_input("Floor Number", step=1)
                 uploaded_images = st.file_uploader("Upload Image(s)", type=["jpg", "jpeg", "png"], accept_multiple_files=True)
                 
-                col1, col2, col3 = st.columns([1, 2, 1])
+                col1, col2, col3 = st.columns([1, 0.5, 1])
                 with col2:
                     submitted = st.form_submit_button("Submit Entry")
             # Only execute this if the form is submitted
