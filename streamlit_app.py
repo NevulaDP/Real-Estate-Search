@@ -52,7 +52,7 @@ if mode == "🏡 Upload Property":
         with col2:
             with st.form("property_form"):
                             st.markdown(required_label("Title"), unsafe_allow_html=True)
-                            title = st.text_input("", key="title_input")
+                            title = st.text_input(label=None, key="title_input")
                             short_description = st.text_area("Short Description")
                             location = st.text_input("Location")
                             price = st.number_input("Price ($)", min_value=1, step=1000)
