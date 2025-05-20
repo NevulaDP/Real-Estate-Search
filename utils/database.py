@@ -1,16 +1,16 @@
 # utils/database.py
 import json
-import uuid
 import numpy as np
 
 def create_property_entry(
+    property_id,
     title, short_description, location, price, size,
     num_bedrooms, num_bathrooms, balcony, parking, floor,
-    detected_features, embedding, image_filenames
+    detected_features, embedding, image_urls
 ):
     return {
-        'id': str(uuid.uuid4()),
-        'image_paths': image_filenames,
+        'id': property_id,
+        'image_paths': image_urls,
         'title': title,
         'short_description': short_description,
         'location': location,
@@ -23,16 +23,6 @@ def create_property_entry(
         'floor': floor,
         'detected_features': detected_features,
         'embedding': embedding.tolist(),
-        'combined_text': None  # Optional, you can store it here too
+        'combined_text': None
     }
 
-def save_entries_to_file(entries, filename='embeddings.json'):
-    with open(filename, 'w') as f:
-        json.dump(entries, f)
-
-def load_entries_from_file(filename='embeddings.json'):
-    try:
-        with open(filename, 'r') as f:
-            return json.load(f)
-    except FileNotFoundError:
-        return []
