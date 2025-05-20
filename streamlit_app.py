@@ -188,13 +188,41 @@ if mode == "🏡 Upload Property":
                 # Save the entry and upload updated DB
                 st.session_state.entries.append(entry)
                 upload_json_to_hub(st.session_state.entries)
-            
+                
                 # Reset session state
                 st.session_state.pending_features = None
                 st.session_state.form_inputs = {}
-            
-                st.success("✅ Entry saved.")
-                st.json(entry)
+                
+                st.success("✅ Property submitted successfully!")
+                
+                with st.container():
+                    st.markdown(f"### 🏡 {entry['title']}")
+                    st.markdown(f"*{entry['short_description']}*")
+                    st.markdown(f"📍 **Location:** {entry['location']}")
+                    st.markdown(f"💰 **Price:** ${entry['price']:,}")
+                    st.markdown(f"🛏️ **Bedrooms:** {entry['num_bedrooms']}  |  🛁 **Bathrooms:** {entry['num_bathrooms']}  |  🏢 **Floor:** {entry['floor']}")
+                    st.markdown(f"📐 **Size:** {entry['size']} sq ft")
+                
+                    extras = []
+                    if entry['balcony']:
+                        extras.append("🪟 Balcony")
+                    if entry['parking']:
+                        extras.append("🅿️ Parking")
+                    if extras:
+                        st.markdown("🔧 **Extras:** " + ", ".join(extras))
+                
+                    if entry["detected_features"]:
+                        st.markdown("### 🧠 Detected Features")
+                        for f in entry["detected_features"]:
+                            st.markdown(f"- **{f['item']}**: {f['description']}")
+                
+                    if entry["image_paths"]:
+                        st.markdown("### 🖼️ Uploaded Images")
+                        cols = st.columns(min(3, len(entry["image_paths"])))
+                        for i, img_url in enumerate(entry["image_paths"]):
+                            with cols[i % len(cols)]:
+                                st.image(img_url, use_column_width="always")
+
 
 elif mode == "🔎 Search Properties":
     st.title("🔎 Search Properties")
