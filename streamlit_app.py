@@ -32,9 +32,9 @@ if "form_inputs" not in st.session_state:
 
 
 # --- SIDEBAR ---#
-st.sidebar.markdown("## 🧠 Smarter Property Engine")
-st.sidebar.title("🔍 Navigation")
-mode = st.sidebar.radio("Go to:", ["🏡 Upload Property", "🔎 Search Properties"])
+st.sidebar.title("🧠 Smarter Property Engine")
+st.sidebar.markdown("## 🔍 Navigation")
+mode = st.sidebar.radio(["🏡 Upload Property", "🔎 Search Properties"])
 
 if mode == "🏡 Upload Property":
     st.title("🏡 Upload Property")
