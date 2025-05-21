@@ -322,7 +322,7 @@ elif mode == "🔎 Search Properties":
                 for i, r in enumerate(reranked):
                     r['semantic_similarity'] = float(similarity_scores[i])
                 
-                similarity_threshold = 0.45
+                similarity_threshold = 0.5
                 filtered_semantic = [r for r in reranked if r['semantic_similarity'] >= similarity_threshold]
                 
                 if not filtered_semantic:
