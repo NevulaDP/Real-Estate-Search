@@ -261,12 +261,7 @@ elif mode == "🔎 Search Properties":
             rewritten = rewrite_query_with_constraints(user_query)
             status.empty()
     
-            with col2:
-                st.markdown(f"""
-                <div style="padding: 0.5rem 1rem; border-left: 4px solid #8884d8; background-color: #111219; font-style: italic;">
-                    {rewritten}
-                </div>
-                """, unsafe_allow_html=True)
+            st.markdown(f"> *{rewritten}*", unsafe_allow_html=True)
 
     
             status.info("📦 Loading property data...")
