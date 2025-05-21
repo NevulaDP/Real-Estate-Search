@@ -326,22 +326,22 @@ elif mode == "🔎 Search Properties":
                 
                 if not filtered_semantic:
                         st.warning("✨ We didn’t find a perfect match, but here are the most relevant properties we found.")
-                ''' DEBUG
+                #DEBUG
                 # 🧠 Debug output
-                with st.expander("🧠 Semantic Similarity Debug"):
-                    for r in reranked:
-                        st.write(f"🏡 {r['data']['title']} → Similarity: {r['semantic_similarity']:.3f}")
-                '''  
+                #with st.expander("🧠 Semantic Similarity Debug"):
+                #   for r in reranked:
+                #       st.write(f"🏡 {r['data']['title']} → Similarity: {r['semantic_similarity']:.3f}")
+                  
                 
                 # Fallback if semantic check failed
                 if filtered_semantic:
                     reranked = sorted(filtered_semantic, key=lambda r: r['semantic_similarity'], reverse=True)
                 # else keep reranked as-is (fallback)
-                ''' DEBUG
-                with st.expander("🧠 Semantic Similarity Debug"):
-                    for r in reranked:
-                        st.write(f"🏡 {r['data']['title']} → Similarity: {r['semantic_similarity']:.3f}")
-                '''
+                # DEBUG
+                #with st.expander("🧠 Semantic Similarity Debug"):
+                #    for r in reranked:
+                #        st.write(f"🏡 {r['data']['title']} → Similarity: {r['semantic_similarity']:.3f}")
+            
             else:
                 # Skip semantic filtering — use reranked as-is
                 pass
