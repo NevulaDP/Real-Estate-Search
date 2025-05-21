@@ -22,7 +22,7 @@ def extract_constraints_from_query(query):
     )
 
     # --- PRICE ---
-    price_pattern = r'(?:price|dollars|\$)?\s*(?:under|less than|below|priced under|costs less than)[^\d]{0,10}(\d[\d,\.]*)'
+    price_pattern = r'(?:price|dollars|\$)?\s*(?:under|less than|below|priced under|costs less than|not exceed)[^\d]{0,10}(\d[\d,\.]*)'
     match_max_price = re.search(price_pattern, query)
     if match_max_price:
         try:
