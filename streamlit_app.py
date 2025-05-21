@@ -326,7 +326,11 @@ elif mode == "🔎 Search Properties":
                 
                 if not filtered_semantic:
                         st.warning("✨ We didn’t find a perfect match, but here are the most relevant properties we found.")
-               
+                #DEBUG
+                # 🧠 Debug output
+                #with st.expander("🧠 Semantic Similarity Debug"):
+                #   for r in reranked:
+                #       st.write(f"🏡 {r['data']['title']} → Similarity: {r['semantic_similarity']:.3f}")
                   
                 
                 # Fallback if semantic check failed
@@ -351,7 +355,7 @@ elif mode == "🔎 Search Properties":
             filtered_results = nli_contradiction_filter(rewritten, reranked, model=nli_model, contradiction_threshold=0.2)
     
             ##########
-            '''
+            """
             with st.expander("🧪 NLI Debug Output"):
                 st.write("Query:", rewritten)
                 for r in reranked:
@@ -359,7 +363,7 @@ elif mode == "🔎 Search Properties":
                     st.write(f"🧠 {r['data']['title']}")
                     st.write(f"- Contradiction: {scores.get('contradiction', 0):.3f}")
                     st.write(f"- Entailment: {scores.get('entailment', 0):.3f}")
-            '''
+            """
             ##########
     
             status.empty()  # Clear the loading messages
