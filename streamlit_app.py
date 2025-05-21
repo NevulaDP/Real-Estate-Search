@@ -253,7 +253,7 @@ elif mode == "🔎 Search Properties":
         except:
             st.error("Failed to load data.")
             st.stop()
-
+        st.write("Extracted constraints:", constraints)
         filtered_data = apply_constraint_filters(data, constraints)
 
         if not filtered_data:
