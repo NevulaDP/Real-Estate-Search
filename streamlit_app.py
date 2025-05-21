@@ -318,7 +318,7 @@ elif mode == "🔎 Search Properties":
             r['semantic_similarity'] = float(similarity_scores[i])
         
         # Only keep results with decent match
-        similarity_threshold = 0.21  # You can tune this
+        similarity_threshold = 0.23  # You can tune this
         reranked = [r for r in reranked if r['semantic_similarity'] >= similarity_threshold]
         
         # Optional: re-sort by similarity
