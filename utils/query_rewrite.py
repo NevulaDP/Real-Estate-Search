@@ -23,6 +23,7 @@ def rewrite_query_with_constraints(user_query):
         - Write each constraint as a separate sentence
         - Do not repeat the same idea
         - Avoid technical language like \"floor number below the highest\"
+        -If the user query contains idioms or figurative language (e.g., "control the weather"), interpret it in a practical way (e.g., air conditioning, climate control).
 
         Query: \"{user_query}\"
         """
