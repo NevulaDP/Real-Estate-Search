@@ -233,6 +233,8 @@ elif mode == "🔎 Search Properties":
     from utils.nli_filter import nli_contradiction_filter, load_nli_model
     from utils.hf_loader import load_entries_from_hub
     from sentence_transformers import CrossEncoder
+    from sklearn.metrics.pairwise import cosine_similarity
+
 
     st.title("🔎 Smart Property Search")
 
@@ -293,6 +295,34 @@ elif mode == "🔎 Search Properties":
             r['rerank_score'] = float(cross_scores[i][2])
 
         reranked = sorted(initial_results, key=lambda x: x['rerank_score'], reverse=True)
+
+        #########
+        # 🔎 Apply semantic similarity filtering
+        query_vector = query_embedding.reshape(1, -1)
+        embedding_matrix = np.array([r['data']['embedding'] for r in reranked])
+        similarity_scores = cosine_similarity(query_vector, embedding_matrix)[0]
+        
+        # Attach scores and filter
+        for i, r in enumerate(reranked):
+            r['semantic_similarity'] = float(similarity_scores[i])
+        
+        # Only keep results with decent match
+        similarity_threshold = 0.35  # You can tune this
+        reranked = [r for r in reranked if r['semantic_similarity'] >= similarity_threshold]
+        
+        # Optional: re-sort by similarity
+        reranked = sorted(reranked, key=lambda r: r['semantic_similarity'], reverse=True)
+        
+        # Abort early if nothing makes the cut
+        if not reranked:
+            status.empty()
+            st.warning("No properties are semantically similar to your request.")
+            st.stop()
+
+
+
+
+        #########
 
         status.info("🧠 Filtering contradictions...")
         #nli_tokenizer, nli_model = load_nli_model()
