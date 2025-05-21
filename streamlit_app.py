@@ -405,4 +405,4 @@ elif mode == "🔎 Search Properties":
                             with cols[i % len(cols)]:
                                 st.image(img_url, use_container_width=True)
     
-                    st.markdown("---")
+                    
