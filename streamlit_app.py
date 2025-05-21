@@ -262,7 +262,7 @@ elif mode == "🔎 Search Properties":
             filtered_data = apply_constraint_filters(data, constraints)
 
         if not filtered_data:
-            st.warning("No properties match your numeric constraints.")
+            st.warning("No properties match your query. Try simplifying it.")
             st.stop()
 
         # Build FAISS index
