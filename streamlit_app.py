@@ -4,7 +4,7 @@ import uuid
 import google.generativeai as palm
 from sentence_transformers import SentenceTransformer
 
-from utils.features import extract_features, generate_combined_text
+from utils.features import extract_features, generate_combined_text, generate_short_text
 from utils.database import create_property_entry
 from utils.hf_uploader import upload_image_to_hub, upload_json_to_hub
 from utils.hf_loader import load_entries_from_hub
