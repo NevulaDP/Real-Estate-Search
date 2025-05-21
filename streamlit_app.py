@@ -284,7 +284,7 @@ elif mode == "🔎 Search Properties":
             st.stop()
 
         status.info("📊 Reranking results...")
-        cross_model = CrossEncoder("cross-encoder/nli-roberta-base")
+        cross_model = CrossEncoder("cross-encoder/nli-deberta-v3-large")
         pairs = [(f"Required features: {rewritten}", r['data']['combined_text']) for r in initial_results]
         cross_scores = cross_model.predict(pairs)
 
