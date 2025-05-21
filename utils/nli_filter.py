@@ -4,7 +4,7 @@ import torch
 import streamlit as st
 from sentence_transformers import CrossEncoder
 
-def nli_contradiction_filter(query, results, contradiction_threshold=0.05):
+def nli_contradiction_filter(query, results, contradiction_threshold=0.4):
     """
     Filters out results that semantically contradict the user's query using a modern cross-encoder.
 
