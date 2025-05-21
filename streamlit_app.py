@@ -247,7 +247,7 @@ elif mode == "🔎 Search Properties":
     col1, col2, col3 = st.columns([1, 2, 1])
     with col2:
         st.markdown("<h1 style='text-align: center;'>🔎 Smart Property Search</h1>", unsafe_allow_html=True)
-        st.markdown("### Find the perfect property — just describe what you're looking for.")
+        st.markdown("<h4 style='text-align: center;'>Find the perfect property — just describe what you're looking for</h4>", unsafe_allow_html=True)
         with st.container():
             st.markdown("<div style='margin-top: 1rem;'></div>", unsafe_allow_html=True)
             user_query = st.text_input("What are you looking for in a property?", placeholder="e.g., modern apartment in Tel Aviv with balcony, under $2M")
