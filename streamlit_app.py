@@ -377,7 +377,7 @@ elif mode == "🔎 Search Properties":
             for entry in filtered_results:
                 prop = entry['data']  # ← this line is essential
     
-                with st.container():
+                with st.container(border=True):
                     st.markdown(f"### 🏡 {prop['title']}")
                     st.markdown(f"*{prop['short_description']}*")
                     st.markdown(f"📍 **Location:** {prop['location']}")
