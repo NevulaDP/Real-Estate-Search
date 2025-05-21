@@ -254,10 +254,10 @@ elif mode == "🔎 Search Properties":
             st.error("Failed to load data.")
             st.stop()
             
-        # Skip filtering if no constraints found
-        if not constraints:
+        # Skip filtering if no meaningful constraints found
+        if not any(constraints.values()):
             filtered_data = data
-            st.write("Working");
+            st.write("🟢 Skipping numeric filters (no constraints)")
         else:
             filtered_data = apply_constraint_filters(data, constraints)
 
