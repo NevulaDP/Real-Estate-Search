@@ -250,8 +250,7 @@ elif mode == "🔎 Search Properties":
         st.markdown("📦 **Loading property data...**")
         try:
             data = load_entries_from_hub()
-            st.markdown(f"✅ Loaded `{len(data)}` properties from database.")
-            st.write(data)  # 👈 DEBUG: Confirm contents            
+            st.markdown(f"✅ Loaded `{len(data)}` properties from database.")            
         except:
             st.error("Failed to load data.")
             st.stop()
