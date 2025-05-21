@@ -253,8 +253,12 @@ elif mode == "🔎 Search Properties":
         except:
             st.error("Failed to load data.")
             st.stop()
-        st.write("Extracted constraints:", constraints)
-        filtered_data = apply_constraint_filters(data, constraints)
+            
+        # Skip filtering if no constraints found
+        if not constraints:
+            filtered_data = data
+        else:
+            filtered_data = apply_constraint_filters(data, constraints)
 
         if not filtered_data:
             st.warning("No properties match your numeric constraints.")
