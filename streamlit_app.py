@@ -240,25 +240,25 @@ elif mode == "🔎 Search Properties":
 
     if user_query:
         st.markdown("---")
-        st.markdown("🔄 **Rewriting your query...**")
-        rewritten = rewrite_query_with_constraints(user_query)
-        st.markdown(f"📌 Rewritten: *{rewritten}*")
+        with st.status("🔄 Rewriting your query...", expanded=False):
+            rewritten = rewrite_query_with_constraints(user_query)
+            st.markdown(f"📌 *{rewritten}*")
 
         constraints = extract_constraints_from_query(rewritten)
 
         st.markdown("---")
-        st.markdown("📦 **Loading property data...**")
-        try:
-            data = load_entries_from_hub()
-            st.markdown(f"✅ Loaded `{len(data)}` properties from database.")            
-        except:
-            st.error("Failed to load data.")
-            st.stop()
-            
+        with st.status("📦 Loading property data...", expanded=False):
+            try:
+                data = load_entries_from_hub()
+                st.success(f"✅ Loaded `{len(data)}` properties from database.")
+            except:
+                st.error("Failed to load data.")
+                st.stop()
+
         # Skip filtering if no meaningful constraints found
         if not any(constraints.values()):
             filtered_data = data
-            st.write("🟢 Skipping numeric filters (no constraints)")
+            st.success("🟢 Skipping numeric filters (no constraints)")
         else:
             filtered_data = apply_constraint_filters(data, constraints)
 
@@ -266,39 +266,35 @@ elif mode == "🔎 Search Properties":
             st.warning("No properties match your query. Try simplifying it.")
             st.stop()
 
-        # Build FAISS index
-        st.markdown("🔍 **Searching...**")
-        embedding_model = load_embedding_model()
-        embeddings = np.array([d['embedding'] for d in filtered_data]).astype('float32')
-        ids = [d['id'] for d in filtered_data]
-        index = build_faiss_index(embeddings)
+        with st.status("🔍 Searching...", expanded=False):
+            embedding_model = load_embedding_model()
+            embeddings = np.array([d['embedding'] for d in filtered_data]).astype('float32')
+            ids = [d['id'] for d in filtered_data]
+            index = build_faiss_index(embeddings)
 
-        # Query index
-        query_embedding = encode_query(
-            f"I'm specifically looking for an apartment that has: {rewritten}. This is a must-have feature.",
-            embedding_model
-        )
-        initial_results = query_index(index, query_embedding, filtered_data, ids, k=10, score_threshold=0.0)
+            query_embedding = encode_query(
+                f"I'm specifically looking for an apartment that has: {rewritten}. This is a must-have feature.",
+                embedding_model
+            )
+            initial_results = query_index(index, query_embedding, filtered_data, ids, k=10, score_threshold=0.0)
 
-        # Rerank with CrossEncoder
         if not initial_results:
             st.warning("No results found after embedding search.")
             st.stop()
 
-        st.markdown("📊 **Reranking results...**")
-        cross_model = CrossEncoder("cross-encoder/nli-roberta-base")
-        pairs = [(f"Required features: {rewritten}", r['data']['combined_text']) for r in initial_results]
-        cross_scores = cross_model.predict(pairs)
+        with st.status("📊 Reranking results...", expanded=False):
+            cross_model = CrossEncoder("cross-encoder/nli-roberta-base")
+            pairs = [(f"Required features: {rewritten}", r['data']['combined_text']) for r in initial_results]
+            cross_scores = cross_model.predict(pairs)
 
-        for i, r in enumerate(initial_results):
-            r['rerank_score'] = float(cross_scores[i][2])
+            for i, r in enumerate(initial_results):
+                r['rerank_score'] = float(cross_scores[i][2])
 
-        reranked = sorted(initial_results, key=lambda x: x['rerank_score'], reverse=True)
+            reranked = sorted(initial_results, key=lambda x: x['rerank_score'], reverse=True)
 
-        # NLI contradiction filtering
-        st.markdown("🧠 **Filtering contradictions...**")
-        nli_tokenizer, nli_model = load_nli_model()
-        filtered_results = nli_contradiction_filter(rewritten, reranked, nli_tokenizer, nli_model)
+        with st.status("🧠 Filtering contradictions...", expanded=False):
+            nli_tokenizer, nli_model = load_nli_model()
+            filtered_results = nli_contradiction_filter(rewritten, reranked, nli_tokenizer, nli_model, contradiction_threshold=0.1)
 
         if not filtered_results:
             st.warning("No results remain after contradiction filtering.")
