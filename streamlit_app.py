@@ -288,6 +288,24 @@ elif mode == "🔎 Search Properties":
         pairs = [(f"Required features: {rewritten}", r['data']['combined_text']) for r in initial_results]
         cross_scores = cross_model.predict(pairs)
 
+        #########
+        with st.expander("🧪 NLI Debug Output"):
+            st.write("Query:", query)
+            for i, (r, logits) in enumerate(zip(results, scores)):
+                if isinstance(logits, float):
+                    entailment_prob = logits
+                    contradiction_prob = 1 - entailment_prob
+                else:
+                    contradiction_prob = logits[0]
+                    entailment_prob = logits[2]
+        
+                st.write(f"🧠 {r['data']['title']}")
+                st.write(f"- Contradiction: {contradiction_prob:.3f}")
+                st.write(f"- Entailment: {entailment_prob:.3f}")
+        
+
+        #########
+
         for i, r in enumerate(initial_results):
             r['rerank_score'] = float(cross_scores[i][2])
 
