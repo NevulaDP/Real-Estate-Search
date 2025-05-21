@@ -355,15 +355,15 @@ elif mode == "🔎 Search Properties":
             filtered_results = nli_contradiction_filter(rewritten, reranked, model=nli_model, contradiction_threshold=0.2)
     
             ##########
-            """
-            with st.expander("🧪 NLI Debug Output"):
-                st.write("Query:", rewritten)
-                for r in reranked:
-                    scores = r.get("nli_scores", {})
-                    st.write(f"🧠 {r['data']['title']}")
-                    st.write(f"- Contradiction: {scores.get('contradiction', 0):.3f}")
-                    st.write(f"- Entailment: {scores.get('entailment', 0):.3f}")
-            """
+            
+            #with st.expander("🧪 NLI Debug Output"):
+            #    st.write("Query:", rewritten)
+            #    for r in reranked:
+            #        scores = r.get("nli_scores", {})
+            #        st.write(f"🧠 {r['data']['title']}")
+            #        st.write(f"- Contradiction: {scores.get('contradiction', 0):.3f}")
+            #        st.write(f"- Entailment: {scores.get('entailment', 0):.3f}")
+            
             ##########
     
             status.empty()  # Clear the loading messages
