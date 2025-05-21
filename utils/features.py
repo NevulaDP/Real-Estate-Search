@@ -77,3 +77,16 @@ def generate_combined_text(
                 feature_descriptions += f" {item}: {desc}"
 
     return f"{base_description} {feature_descriptions.strip()}"
+
+def generate_short_text(title, short_description, location, price, size, num_bedrooms, num_bathrooms, balcony, parking, floor, detected_features):
+    feature_keywords = [f['item'] for f in detected_features]
+    feature_string = ", ".join(feature_keywords)
+
+    return (
+        f"{title}. {short_description} Located in {location}. "
+        f"Price: ${price}. Size: {size} sq ft. {num_bedrooms} bedrooms, "
+        f"{num_bathrooms} bathrooms. Floor: {floor}. "
+        f"{'Includes a balcony.' if balcony else ''} {'Includes parking.' if parking else ''} "
+        f"Features: {feature_string}."
+    )
+
