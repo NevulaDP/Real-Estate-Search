@@ -295,7 +295,7 @@ elif mode == "🔎 Search Properties":
 
         status.info("🧠 Filtering contradictions...")
         #nli_tokenizer, nli_model = load_nli_model()
-        filtered_results = nli_contradiction_filter(rewritten, reranked, nli_tokenizer, nli_model, contradiction_threshold=0.1)
+        filtered_results = nli_contradiction_filter(rewritten, reranked)
 
         status.empty()  # Clear the loading messages
 
