@@ -47,8 +47,8 @@ if mode == "🏡 Upload Property":
         st.session_state.upload_stage = "form"  # Reset for next round
 
         st.success("✅ Property submitted successfully!")
-        
-         # Center the confirmation inside a full-width container
+
+        # Center the confirmation inside a full-width container
         col1, col2, col3 = st.columns([1, 2, 1])
         with col2:
             with st.container():
@@ -58,7 +58,7 @@ if mode == "🏡 Upload Property":
                 st.markdown(f"💰 **Price:** ${entry['price']:,}")
                 st.markdown(f"🛏️ **Bedrooms:** {entry['num_bedrooms']}  |  🛁 **Bathrooms:** {entry['num_bathrooms']}  |  🏢 **Floor:** {entry['floor']}")
                 st.markdown(f"📐 **Size:** {entry['size']} sq ft")
-    
+
                 extras = []
                 if entry['balcony']:
                     extras.append("🪟 Balcony")
@@ -66,12 +66,12 @@ if mode == "🏡 Upload Property":
                     extras.append("🅿️ Parking")
                 if extras:
                     st.markdown("🔧 **Extras:** " + ", ".join(extras))
-    
+
                 if entry["detected_features"]:
                     st.markdown("### 🧠 Detected Features")
                     for f in entry["detected_features"]:
                         st.markdown(f"- **{f['item']}**: {f['description']}")
-    
+
                 if entry["image_paths"]:
                     st.markdown("### 🖼️ Uploaded Images")
                     cols = st.columns(min(3, len(entry["image_paths"])))
@@ -197,7 +197,14 @@ if mode == "🏡 Upload Property":
                     detected_features=confirmed_features
                 )
 
-                embedding = model.encode(combined_text)
+                short_text = generate_short_text(
+                    inputs["title"], inputs["short_description"], inputs["location"],
+                    inputs["price"], inputs["size"], inputs["num_bedrooms"],
+                    inputs["num_bathrooms"], inputs["balcony"], inputs["parking"], inputs["floor"],
+                    confirmed_features
+                )
+
+                embedding = model.encode(short_text)
                 property_uuid = str(uuid.uuid4())
 
                 image_urls = [upload_image_to_hub(img, property_uuid) for img in inputs["uploaded_images"]]
@@ -210,6 +217,7 @@ if mode == "🏡 Upload Property":
                     confirmed_features, embedding, image_urls
                 )
                 entry["combined_text"] = combined_text
+                entry["short_text"] = short_text
 
                 st.session_state.entries.append(entry)
                 upload_json_to_hub(entry)
@@ -219,6 +227,7 @@ if mode == "🏡 Upload Property":
                 st.session_state.upload_stage = "done"
                 st.session_state.finalized_entry = entry
                 st.rerun()
+
 
 
 
