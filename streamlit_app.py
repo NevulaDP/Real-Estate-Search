@@ -322,7 +322,7 @@ elif mode == "🔎 Search Properties":
             filtered_semantic = [r for r in reranked if r['semantic_similarity'] >= similarity_threshold]
             
             if not filtered_semantic:
-                    st.warning("⚠️ Semantic check failed — using fallback to reranked results.")
+                    st.warning("✨ We didn’t find a perfect match, but here are the most relevant properties we found.")
             
             # 🧠 Debug output
             with st.expander("🧠 Semantic Similarity Debug"):
