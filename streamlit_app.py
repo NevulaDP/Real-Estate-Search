@@ -244,6 +244,7 @@ elif mode == "🔎 Search Properties":
 
         status.info("🔄 Rewriting your query...")
         rewritten = rewrite_query_with_constraints(user_query)
+        status.empty()
 
         st.markdown(f"> *{rewritten}*", unsafe_allow_html=True)
 
@@ -257,11 +258,11 @@ elif mode == "🔎 Search Properties":
         constraints = extract_constraints_from_query(rewritten)
         if not any(constraints.values()):
             filtered_data = data
-            st.success("🟢 Skipping numeric filters (no constraints)")
         else:
             filtered_data = apply_constraint_filters(data, constraints)
 
         if not filtered_data:
+            status.empty()
             st.warning("No properties match your query. Try simplifying it.")
             st.stop()
 
@@ -278,6 +279,7 @@ elif mode == "🔎 Search Properties":
         initial_results = query_index(index, query_embedding, filtered_data, ids, k=10, score_threshold=0.0)
 
         if not initial_results:
+            status.empty()
             st.warning("No results found after embedding search.")
             st.stop()
 
@@ -310,14 +312,14 @@ elif mode == "🔎 Search Properties":
                 st.markdown(f"*{prop['short_description']}*")
                 st.markdown(f"📍 **Location:** {prop['location']}")
                 st.markdown(f"💰 **Price:** ${prop['price']:,}")
-                st.markdown(f"🛏️ **Bedrooms:** {prop['num_bedrooms']}  |  🛁 **Bathrooms:** {prop['num_bathrooms']}  |  🏢 **Floor:** {prop['floor']}")
-                st.markdown(f"📐 **Size:** {prop['size']} sq ft")
+                st.markdown(f"🛌 **Bedrooms:** {prop['num_bedrooms']}  |  🛁 **Bathrooms:** {prop['num_bathrooms']}  |  🏢 **Floor:** {prop['floor']}")
+                st.markdown(f"🖐️ **Size:** {prop['size']} sq ft")
 
                 extras = []
                 if prop['balcony']:
                     extras.append("🪟 Balcony")
                 if prop['parking']:
-                    extras.append("🅿️ Parking")
+                    extras.append("🔃 Parking")
                 if extras:
                     st.markdown("🔧 **Extras:** " + ", ".join(extras))
 
@@ -334,6 +336,5 @@ elif mode == "🔎 Search Properties":
                             st.image(img_url, use_container_width=True)
 
                 st.markdown("---")
-
 
 
