@@ -290,7 +290,7 @@ elif mode == "🔎 Search Properties":
 
         #########
         with st.expander("🧪 NLI Debug Output"):
-            st.write("Query:", query)
+            st.write("Query:", rewritten)
             for i, (r, logits) in enumerate(zip(results, scores)):
                 if isinstance(logits, float):
                     entailment_prob = logits
