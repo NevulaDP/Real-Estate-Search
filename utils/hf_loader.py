@@ -6,19 +6,12 @@ def load_entries_from_hub(filename="property_db.json"):
     url = f"https://huggingface.co/datasets/{HF_REPO_ID}/resolve/main/{filename}"
     try:
         response = requests.get(url)
-        if response.status_code != 200:
-            print(f"❌ Failed to fetch: {response.status_code}")
-            print(f"URL tried: {url}")
-            return []
+        response.raise_for_status()  # will throw error on 403/404/etc
 
-        try:
-            return response.json()
-        except json.JSONDecodeError as e:
-            print("❌ JSON decoding failed.")
-            print("Raw content:")
-            print(response.text[:500])  # Print the beginning of file
-            return []
+        # Print/log to verify it's pulling live
+        print("✅ Successfully pulled data from Hugging Face")
 
+        return json.loads(response.text)
     except Exception as e:
-        print(f"❌ General exception: {e}")
+        print("❌ Error pulling data:", e)
         return []
