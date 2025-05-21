@@ -22,22 +22,27 @@ def upload_image_to_hub(image_file, property_uuid, save_dir="temp_images"):
     return f"https://huggingface.co/datasets/{HF_REPO_ID}/resolve/main/{hf_path}"
 
 def upload_json_to_hub(new_entry, filename="property_db.json"):
-    from utils.hf_loader import load_entries_from_hub
+    try:
+        from utils.hf_loader import load_entries_from_hub
 
-    existing_entries = load_entries_from_hub(filename)
-    #st.write("🔁 Appending to existing entries...") <---- DEBUG
-    #st.write("Entries before upload:", len(existing_entries)) <---- DEBUG
+        # Load entries directly from Hugging Face
+        existing_entries = load_entries_from_hub(filename)
 
+        # Avoid duplicates
+        if not any(e["id"] == new_entry["id"] for e in existing_entries):
+            existing_entries.append(new_entry)
 
-    all_entries = existing_entries + [new_entry]
+        # Save to local file
+        with open(filename, "w") as f:
+            json.dump(existing_entries, f, indent=2)
 
-    with open(filename, "w") as f:
-        json.dump(all_entries, f, indent=2)
-
-    upload_file(
-        path_or_fileobj=filename,
-        path_in_repo=filename,
-        repo_id=HF_REPO_ID,
-        repo_type="dataset",
-        token=HF_TOKEN
-    )
+        # Upload to Hugging Face
+        upload_file(
+            path_or_fileobj=filename,
+            path_in_repo=filename,
+            repo_id=HF_REPO_ID,
+            repo_type="dataset",
+            token=HF_TOKEN
+        )
+    except Exception as e:
+        st.error(f"❌ Failed to upload property DB: {e}")
