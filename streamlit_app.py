@@ -297,6 +297,7 @@ elif mode == "🔎 Search Properties":
         #nli_tokenizer, nli_model = load_nli_model()
         nli_model = load_nli_model()
         filtered_results = nli_contradiction_filter(rewritten, reranked, model=nli_model, contradiction_threshold=0.01)
+        st.write("🧪 Final Results After NLI:", [r["data"]["title"] for r in filtered_results])
 
         status.empty()  # Clear the loading messages
 
