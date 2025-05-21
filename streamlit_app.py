@@ -314,22 +314,24 @@ elif mode == "🔎 Search Properties":
             embedding_matrix = np.array([r['data']['embedding'] for r in reranked])
             similarity_scores = cosine_similarity(query_vector, embedding_matrix)[0]
             
-            # Attach scores and filter
+            # Attach scores
             for i, r in enumerate(reranked):
                 r['semantic_similarity'] = float(similarity_scores[i])
             
-            # Only keep results with decent match
-            similarity_threshold = 0.3  # You can tune this
-            reranked = [r for r in reranked if r['semantic_similarity'] >= similarity_threshold]
+            similarity_threshold = 0.4
+            filtered_semantic = [r for r in reranked if r['semantic_similarity'] >= similarity_threshold]
             
-            # Optional: re-sort by similarity
-            reranked = sorted(reranked, key=lambda r: r['semantic_similarity'], reverse=True)
+            # 🧠 Debug output
+            with st.expander("🧠 Semantic Similarity Debug"):
+                for r in reranked:
+                    st.write(f"🏡 {r['data']['title']} → Similarity: {r['semantic_similarity']:.3f}")
+                if not filtered_semantic:
+                    st.warning("⚠️ Semantic check failed — using fallback to reranked results.")
             
-            # Abort early if nothing makes the cut
-            if not reranked:
-                status.empty()
-                st.warning("No properties are semantically similar to your request.")
-                st.stop()
+            # Fallback if semantic check failed
+            if filtered_semantic:
+                reranked = sorted(filtered_semantic, key=lambda r: r['semantic_similarity'], reverse=True)
+            # else keep reranked as-is (fallback)
     
             with st.expander("🧠 Semantic Similarity Debug"):
                 for r in reranked:
