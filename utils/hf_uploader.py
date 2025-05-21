@@ -25,8 +25,8 @@ def upload_json_to_hub(new_entry, filename="property_db.json"):
     from utils.hf_loader import load_entries_from_hub
 
     existing_entries = load_entries_from_hub(filename)
-    st.write("🔁 Appending to existing entries...")
-    st.write("Entries before upload:", len(existing_entries))
+    #st.write("🔁 Appending to existing entries...") <---- DEBUG
+    #st.write("Entries before upload:", len(existing_entries)) <---- DEBUG
 
 
     all_entries = existing_entries + [new_entry]
