@@ -240,14 +240,14 @@ elif mode == "🔎 Search Properties":
 
     if user_query:
         st.markdown("---")
-        status_box = st.empty()
-        rewritten_box = st.empty()
+        status = st.empty()
 
-        status_box.info("🔄 Rewriting your query...")
+        status.info("🔄 Rewriting your query...")
         rewritten = rewrite_query_with_constraints(user_query)
-        rewritten_box.success(f"📌 *{rewritten}*")
 
-        status_box.info("📦 Loading property data...")
+        st.markdown(f"> *{rewritten}*", unsafe_allow_html=True)
+
+        status.info("📦 Loading property data...")
         try:
             data = load_entries_from_hub()
         except:
@@ -265,7 +265,7 @@ elif mode == "🔎 Search Properties":
             st.warning("No properties match your query. Try simplifying it.")
             st.stop()
 
-        status_box.info("🔍 Searching...")
+        status.info("🔍 Searching...")
         embedding_model = load_embedding_model()
         embeddings = np.array([d['embedding'] for d in filtered_data]).astype('float32')
         ids = [d['id'] for d in filtered_data]
@@ -281,7 +281,7 @@ elif mode == "🔎 Search Properties":
             st.warning("No results found after embedding search.")
             st.stop()
 
-        status_box.info("📊 Reranking results...")
+        status.info("📊 Reranking results...")
         cross_model = CrossEncoder("cross-encoder/nli-roberta-base")
         pairs = [(f"Required features: {rewritten}", r['data']['combined_text']) for r in initial_results]
         cross_scores = cross_model.predict(pairs)
@@ -291,11 +291,11 @@ elif mode == "🔎 Search Properties":
 
         reranked = sorted(initial_results, key=lambda x: x['rerank_score'], reverse=True)
 
-        status_box.info("🧠 Filtering contradictions...")
+        status.info("🧠 Filtering contradictions...")
         nli_tokenizer, nli_model = load_nli_model()
         filtered_results = nli_contradiction_filter(rewritten, reranked, nli_tokenizer, nli_model, contradiction_threshold=0.1)
 
-        status_box.empty()
+        status.empty()  # Clear the loading messages
 
         if not filtered_results:
             st.warning("No results remain after contradiction filtering.")
