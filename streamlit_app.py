@@ -212,7 +212,7 @@ if mode == "🏡 Upload Property":
                 entry["combined_text"] = combined_text
 
                 st.session_state.entries.append(entry)
-                upload_json_to_hub(st.session_state.entries)
+                upload_json_to_hub(entry)
 
                 st.session_state.pending_features = None
                 st.session_state.form_inputs = {}
