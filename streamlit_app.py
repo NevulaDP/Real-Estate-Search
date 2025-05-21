@@ -288,23 +288,6 @@ elif mode == "🔎 Search Properties":
         pairs = [(f"Required features: {rewritten}", r['data']['combined_text']) for r in initial_results]
         cross_scores = cross_model.predict(pairs)
 
-        #########
-        with st.expander("🧪 NLI Debug Output"):
-            st.write("Query:", rewritten)
-            for i, (r, logits) in enumerate(zip(initial_results, cross_scores)):
-                if isinstance(logits, float):
-                    entailment_prob = logits
-                    contradiction_prob = 1 - entailment_prob
-                else:
-                    contradiction_prob = logits[0]
-                    entailment_prob = logits[2]
-        
-                st.write(f"🧠 {r['data']['title']}")
-                st.write(f"- Contradiction: {contradiction_prob:.3f}")
-                st.write(f"- Entailment: {entailment_prob:.3f}")
-        
-
-        #########
 
         for i, r in enumerate(initial_results):
             r['rerank_score'] = float(cross_scores[i][2])
@@ -315,6 +298,17 @@ elif mode == "🔎 Search Properties":
         #nli_tokenizer, nli_model = load_nli_model()
         nli_model = load_nli_model()
         filtered_results = nli_contradiction_filter(rewritten, reranked, model=nli_model, contradiction_threshold=0.01)
+
+        ##########
+        with st.expander("🧪 NLI Debug Output"):
+            st.write("Query:", rewritten)
+            for r in reranked:
+                scores = r.get("nli_scores", {})
+                st.write(f"🧠 {r['data']['title']}")
+                st.write(f"- Contradiction: {scores.get('contradiction', 0):.3f}")
+                st.write(f"- Entailment: {scores.get('entailment', 0):.3f}")
+
+        ##########
 
         status.empty()  # Clear the loading messages
 
