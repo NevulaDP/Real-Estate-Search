@@ -231,6 +231,7 @@ elif mode == "🔎 Search Properties":
     from utils.constraint_filter import extract_constraints_from_query, apply_constraint_filters
     from utils.search_embeddings import load_embedding_model, build_faiss_index, encode_query, query_index
     from utils.nli_filter import load_nli_model, nli_contradiction_filter
+    from utils.hf_loader import load_entries_from_hub
     from sentence_transformers import CrossEncoder
 
     st.title("🔎 Smart Property Search")
@@ -248,8 +249,7 @@ elif mode == "🔎 Search Properties":
         st.markdown("---")
         st.markdown("📦 **Loading property data...**")
         try:
-            with open("embeddings.json", "r") as f:
-                data = json.load(f)
+            data = load_entries_from_hub()
         except:
             st.error("Failed to load data.")
             st.stop()
@@ -331,5 +331,6 @@ elif mode == "🔎 Search Properties":
                             st.image(img_url, use_container_width=True)
 
                 st.markdown("---")
+
 
 
