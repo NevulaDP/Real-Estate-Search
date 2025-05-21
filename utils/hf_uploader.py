@@ -24,6 +24,7 @@ def upload_json_to_hub(new_entries, filename="property_db.json"):
     # Step 1: Load existing entries
     from utils.hf_loader import load_entries_from_hub
     existing_entries = load_entries_from_hub(filename)
+    print(f"🧠 Existing entries loaded: {len(existing_entries)}")  # Add this line DEBUG
 
     # Step 2: Merge without duplicates
     all_entries = existing_entries + new_entries if isinstance(new_entries, list) else existing_entries + [new_entries]
