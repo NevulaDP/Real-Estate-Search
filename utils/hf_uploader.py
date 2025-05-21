@@ -2,6 +2,7 @@ import os
 import json
 from huggingface_hub import upload_file
 from utils.hf_config import HF_REPO_ID, HF_TOKEN
+import streamlit as st
 
 def upload_image_to_hub(image_file, property_uuid, save_dir="temp_images"):
     os.makedirs(save_dir, exist_ok=True)
