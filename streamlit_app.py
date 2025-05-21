@@ -247,7 +247,7 @@ elif mode == "🔎 Search Properties":
     col1, col2, col3 = st.columns([1, 2, 1])
     with col2:
         st.title("🔎 Smart Property Search")
-    
+        st.markdown("### Find the perfect property — just describe what you're looking for.")
         user_query = st.text_input("What are you looking for in a property?", placeholder="e.g., cheap 2-bedroom with balcony")
     
         if user_query:
