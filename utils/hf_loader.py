@@ -1,19 +1,19 @@
 import requests
 import json
+from huggingface_hub import hf_hub_download
 from utils.hf_config import HF_REPO_ID
 import streamlit as st
 
 def load_entries_from_hub(filename="property_db.json"):
-    url = f"https://huggingface.co/datasets/{HF_REPO_ID}/resolve/main/{filename}"
     try:
-        response = requests.get(url)
-        response.raise_for_status()  # will throw error on 403/404/etc
-
-        # Print/log to verify it's pulling live
-        st.write("✅ Successfully pulled data from Hugging Face")
-        st.write(f"🔁 Found {len(existing_entries)} existing entries")
-
-        return json.loads(response.text)
+        local_path = hf_hub_download(
+            repo_id=HF_REPO_ID,
+            repo_type="dataset",
+            filename=filename,
+            token=HF_TOKEN  # if needed
+        )
+        with open(local_path, "r") as f:
+            return json.load(f)
     except Exception as e:
-        print("❌ Error pulling data:", e)
+        st.warning(f"❌ Failed to load property DB: {e}")
         return []
