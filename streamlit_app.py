@@ -257,6 +257,7 @@ elif mode == "🔎 Search Properties":
         # Skip filtering if no constraints found
         if not constraints:
             filtered_data = data
+            st.write("Working");
         else:
             filtered_data = apply_constraint_filters(data, constraints)
 
