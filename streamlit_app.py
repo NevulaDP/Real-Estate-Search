@@ -244,161 +244,162 @@ elif mode == "🔎 Search Properties":
     from sentence_transformers import CrossEncoder
     from sklearn.metrics.pairwise import cosine_similarity
 
-
-    st.title("🔎 Smart Property Search")
-
-    user_query = st.text_input("What are you looking for in a property?", placeholder="e.g., cheap 2-bedroom with balcony")
-
-    if user_query:
-        st.markdown("---")
-        status = st.empty()
-
-        status.info("🔄 Rewriting your query...")
-        rewritten = rewrite_query_with_constraints(user_query)
-        status.empty()
-
-        st.markdown(f"> *{rewritten}*", unsafe_allow_html=True)
-
-        status.info("📦 Loading property data...")
-        try:
-            data = load_entries_from_hub()
-        except:
-            st.error("Failed to load data.")
-            st.stop()
-
-        constraints = extract_constraints_from_query(rewritten)
-        constraints_found = any(constraints.values())
-        if not any(constraints.values()):
-            filtered_data = data
-        else:
-            filtered_data = apply_constraint_filters(data, constraints)
-
-        if not filtered_data:
-            status.empty()
-            st.warning("No properties match your query. Try simplifying it.")
-            st.stop()
-
-        status.info("🔍 Searching...")
-        embedding_model = load_embedding_model()
-        embeddings = np.array([d['embedding'] for d in filtered_data]).astype('float32')
-        #########
-
-        ids = [d['id'] for d in filtered_data]
-        index = build_faiss_index(embeddings)
-
-        query_embedding = encode_query(
-            f"{rewritten}",
-            embedding_model
-        )
-        initial_results = query_index(index, query_embedding, filtered_data, ids, k=10, score_threshold=0.0)
-
-        if not initial_results:
-            status.empty()
-            st.warning("No results found after embedding search.")
-            st.stop()
-
-        status.info("📊 Reranking results...")
-        cross_model = CrossEncoder("cross-encoder/nli-deberta-v3-large")
-        pairs = [(f"Required features: {rewritten}", r['data']['combined_text']) for r in initial_results]
-        cross_scores = cross_model.predict(pairs)
-
-
-        for i, r in enumerate(initial_results):
-            r['rerank_score'] = float(cross_scores[i][2])
-
-        reranked = sorted(initial_results, key=lambda x: x['rerank_score'], reverse=True)
-        if not constraints_found:
-            #########
-            # 🔎 Apply semantic similarity filtering
-            query_vector = query_embedding.reshape(1, -1)
-            embedding_matrix = np.array([r['data']['embedding'] for r in reranked])
-            similarity_scores = cosine_similarity(query_vector, embedding_matrix)[0]
-            
-            # Attach scores
-            for i, r in enumerate(reranked):
-                r['semantic_similarity'] = float(similarity_scores[i])
-            
-            similarity_threshold = 0.4
-            filtered_semantic = [r for r in reranked if r['semantic_similarity'] >= similarity_threshold]
-            
-            if not filtered_semantic:
-                    st.warning("✨ We didn’t find a perfect match, but here are the most relevant properties we found.")
-            
-            # 🧠 Debug output
-            with st.expander("🧠 Semantic Similarity Debug"):
-                for r in reranked:
-                    st.write(f"🏡 {r['data']['title']} → Similarity: {r['semantic_similarity']:.3f}")
-               
-            
-            # Fallback if semantic check failed
-            if filtered_semantic:
-                reranked = sorted(filtered_semantic, key=lambda r: r['semantic_similarity'], reverse=True)
-            # else keep reranked as-is (fallback)
+    col1, col2, col3 = st.columns([1, 2, 1])
+    with col2:
+        st.title("🔎 Smart Property Search")
     
-            with st.expander("🧠 Semantic Similarity Debug"):
+        user_query = st.text_input("What are you looking for in a property?", placeholder="e.g., cheap 2-bedroom with balcony")
+    
+        if user_query:
+            st.markdown("---")
+            status = st.empty()
+    
+            status.info("🔄 Rewriting your query...")
+            rewritten = rewrite_query_with_constraints(user_query)
+            status.empty()
+    
+            st.markdown(f"> *{rewritten}*", unsafe_allow_html=True)
+    
+            status.info("📦 Loading property data...")
+            try:
+                data = load_entries_from_hub()
+            except:
+                st.error("Failed to load data.")
+                st.stop()
+    
+            constraints = extract_constraints_from_query(rewritten)
+            constraints_found = any(constraints.values())
+            if not any(constraints.values()):
+                filtered_data = data
+            else:
+                filtered_data = apply_constraint_filters(data, constraints)
+    
+            if not filtered_data:
+                status.empty()
+                st.warning("No properties match your query. Try simplifying it.")
+                st.stop()
+    
+            status.info("🔍 Searching...")
+            embedding_model = load_embedding_model()
+            embeddings = np.array([d['embedding'] for d in filtered_data]).astype('float32')
+            #########
+    
+            ids = [d['id'] for d in filtered_data]
+            index = build_faiss_index(embeddings)
+    
+            query_embedding = encode_query(
+                f"{rewritten}",
+                embedding_model
+            )
+            initial_results = query_index(index, query_embedding, filtered_data, ids, k=10, score_threshold=0.0)
+    
+            if not initial_results:
+                status.empty()
+                st.warning("No results found after embedding search.")
+                st.stop()
+    
+            status.info("📊 Reranking results...")
+            cross_model = CrossEncoder("cross-encoder/nli-deberta-v3-large")
+            pairs = [(f"Required features: {rewritten}", r['data']['combined_text']) for r in initial_results]
+            cross_scores = cross_model.predict(pairs)
+    
+    
+            for i, r in enumerate(initial_results):
+                r['rerank_score'] = float(cross_scores[i][2])
+    
+            reranked = sorted(initial_results, key=lambda x: x['rerank_score'], reverse=True)
+            if not constraints_found:
+                #########
+                # 🔎 Apply semantic similarity filtering
+                query_vector = query_embedding.reshape(1, -1)
+                embedding_matrix = np.array([r['data']['embedding'] for r in reranked])
+                similarity_scores = cosine_similarity(query_vector, embedding_matrix)[0]
+                
+                # Attach scores
+                for i, r in enumerate(reranked):
+                    r['semantic_similarity'] = float(similarity_scores[i])
+                
+                similarity_threshold = 0.4
+                filtered_semantic = [r for r in reranked if r['semantic_similarity'] >= similarity_threshold]
+                
+                if not filtered_semantic:
+                        st.warning("✨ We didn’t find a perfect match, but here are the most relevant properties we found.")
+                
+                # 🧠 Debug output
+                with st.expander("🧠 Semantic Similarity Debug"):
+                    for r in reranked:
+                        st.write(f"🏡 {r['data']['title']} → Similarity: {r['semantic_similarity']:.3f}")
+                   
+                
+                # Fallback if semantic check failed
+                if filtered_semantic:
+                    reranked = sorted(filtered_semantic, key=lambda r: r['semantic_similarity'], reverse=True)
+                # else keep reranked as-is (fallback)
+        
+                with st.expander("🧠 Semantic Similarity Debug"):
+                    for r in reranked:
+                        st.write(f"🏡 {r['data']['title']} → Similarity: {r['semantic_similarity']:.3f}")
+            else:
+                # Skip semantic filtering — use reranked as-is
+                pass
+    
+    
+            #########
+    
+            status.info("🧠 Filtering contradictions...")
+            #nli_tokenizer, nli_model = load_nli_model()
+            nli_model = load_nli_model()
+            filtered_results = nli_contradiction_filter(rewritten, reranked, model=nli_model, contradiction_threshold=0.2)
+    
+            ##########
+            with st.expander("🧪 NLI Debug Output"):
+                st.write("Query:", rewritten)
                 for r in reranked:
-                    st.write(f"🏡 {r['data']['title']} → Similarity: {r['semantic_similarity']:.3f}")
-        else:
-            # Skip semantic filtering — use reranked as-is
-            pass
-
-
-        #########
-
-        status.info("🧠 Filtering contradictions...")
-        #nli_tokenizer, nli_model = load_nli_model()
-        nli_model = load_nli_model()
-        filtered_results = nli_contradiction_filter(rewritten, reranked, model=nli_model, contradiction_threshold=0.2)
-
-        ##########
-        with st.expander("🧪 NLI Debug Output"):
-            st.write("Query:", rewritten)
-            for r in reranked:
-                scores = r.get("nli_scores", {})
-                st.write(f"🧠 {r['data']['title']}")
-                st.write(f"- Contradiction: {scores.get('contradiction', 0):.3f}")
-                st.write(f"- Entailment: {scores.get('entailment', 0):.3f}")
-
-        ##########
-
-        status.empty()  # Clear the loading messages
-
-        if not filtered_results:
-            st.warning("No results remain after contradiction filtering.")
-            st.stop()
-
-        st.markdown("---")
-        st.markdown("### 🔎 Search Results")
-        for entry in filtered_results:
-            prop = entry['data']
-            with st.container():
-                st.markdown(f"### 🏡 {prop['title']}")
-                st.markdown(f"*{prop['short_description']}*")
-                st.markdown(f"📍 **Location:** {prop['location']}")
-                st.markdown(f"💰 **Price:** ${prop['price']:,}")
-                st.markdown(f"🛌 **Bedrooms:** {prop['num_bedrooms']}  |  🛁 **Bathrooms:** {prop['num_bathrooms']}  |  🏢 **Floor:** {prop['floor']}")
-                st.markdown(f"🖐️ **Size:** {prop['size']} sq ft")
-
-                extras = []
-                if prop['balcony']:
-                    extras.append("🪟 Balcony")
-                if prop['parking']:
-                    extras.append("🔃 Parking")
-                if extras:
-                    st.markdown("🔧 **Extras:** " + ", ".join(extras))
-
-                if prop["detected_features"]:
-                    st.markdown("### 🧠 Detected Features")
-                    for f in prop["detected_features"]:
-                        st.markdown(f"- **{f['item']}**: {f['description']}")
-
-                if prop["image_paths"]:
-                    st.markdown("### 🖼️ Uploaded Images")
-                    cols = st.columns(min(3, len(prop["image_paths"])))
-                    for i, img_url in enumerate(prop["image_paths"]):
-                        with cols[i % len(cols)]:
-                            st.image(img_url, use_container_width=True)
-
-                st.markdown("---")
+                    scores = r.get("nli_scores", {})
+                    st.write(f"🧠 {r['data']['title']}")
+                    st.write(f"- Contradiction: {scores.get('contradiction', 0):.3f}")
+                    st.write(f"- Entailment: {scores.get('entailment', 0):.3f}")
+    
+            ##########
+    
+            status.empty()  # Clear the loading messages
+    
+            if not filtered_results:
+                st.warning("No results remain after contradiction filtering.")
+                st.stop()
+    
+            st.markdown("---")
+            st.markdown("### 🔎 Search Results")
+            for entry in filtered_results:
+                prop = entry['data']
+                with st.container():
+                    st.markdown(f"### 🏡 {prop['title']}")
+                    st.markdown(f"*{prop['short_description']}*")
+                    st.markdown(f"📍 **Location:** {prop['location']}")
+                    st.markdown(f"💰 **Price:** ${prop['price']:,}")
+                    st.markdown(f"🛌 **Bedrooms:** {prop['num_bedrooms']}  |  🛁 **Bathrooms:** {prop['num_bathrooms']}  |  🏢 **Floor:** {prop['floor']}")
+                    st.markdown(f"🖐️ **Size:** {prop['size']} sq ft")
+    
+                    extras = []
+                    if prop['balcony']:
+                        extras.append("🪟 Balcony")
+                    if prop['parking']:
+                        extras.append("🔃 Parking")
+                    if extras:
+                        st.markdown("🔧 **Extras:** " + ", ".join(extras))
+    
+                    if prop["detected_features"]:
+                        st.markdown("### 🧠 Detected Features")
+                        for f in prop["detected_features"]:
+                            st.markdown(f"- **{f['item']}**: {f['description']}")
+    
+                    if prop["image_paths"]:
+                        st.markdown("### 🖼️ Uploaded Images")
+                        cols = st.columns(min(3, len(prop["image_paths"])))
+                        for i, img_url in enumerate(prop["image_paths"]):
+                            with cols[i % len(cols)]:
+                                st.image(img_url, use_container_width=True)
+    
+                    st.markdown("---")
 
 
