@@ -280,7 +280,7 @@ elif mode == "🔎 Search Properties":
         status.info("🔍 Searching...")
         embedding_model = load_embedding_model()
         embeddings = np.array([d['embedding'] for d in filtered_data]).astype('float32')
-        ])#########
+        #########
 
         ids = [d['id'] for d in filtered_data]
         index = build_faiss_index(embeddings)
