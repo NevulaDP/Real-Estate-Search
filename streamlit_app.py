@@ -223,33 +223,113 @@ if mode == "🏡 Upload Property":
 
 
 elif mode == "🔎 Search Properties":
-    st.title("🔎 Search Properties")
+    import json
+    import numpy as np
+    import streamlit as st
 
-    query = st.text_input("Describe what you're looking for:")
-    if st.button("Search"):
-        if query.strip():
-            query_embedding = model.encode(query)
+    from utils.query_rewrite import rewrite_query_with_constraints
+    from utils.constraint_filter import extract_constraints_from_query, apply_constraint_filters
+    from utils.search_embeddings import load_embedding_model, build_faiss_index, encode_query, query_index
+    from utils.nli_filter import load_nli_model, nli_contradiction_filter
+    from sentence_transformers import CrossEncoder
 
-            # Do similarity search against loaded entries
-            results = []
-            for entry in st.session_state.entries:
-                entry_embedding = np.array(entry["embedding"])
-                score = np.dot(query_embedding, entry_embedding) / (
-                    np.linalg.norm(query_embedding) * np.linalg.norm(entry_embedding)
-                )
-                results.append((score, entry))
+    st.title("🔎 Smart Property Search")
 
-            results.sort(reverse=True, key=lambda x: x[0])
-            top_results = results[:5]
+    user_query = st.text_input("What are you looking for in a property?", placeholder="e.g., cheap 2-bedroom with balcony")
 
-            for score, entry in top_results:
-                st.markdown(f"### 📌 {entry['title']} (Score: {score:.2f})")
-                st.markdown(entry["short_description"])
-                if entry["image_paths"]:
-                    st.image(entry["image_paths"][0], width=300)
+    if user_query:
+        st.markdown("---")
+        st.markdown("🔄 **Rewriting your query...**")
+        rewritten = rewrite_query_with_constraints(user_query)
+        st.markdown(f"📌 Rewritten: *{rewritten}*")
+
+        constraints = extract_constraints_from_query(rewritten)
+
+        st.markdown("---")
+        st.markdown("📦 **Loading property data...**")
+        try:
+            with open("embeddings.json", "r") as f:
+                data = json.load(f)
+        except:
+            st.error("Failed to load data.")
+            st.stop()
+
+        filtered_data = apply_constraint_filters(data, constraints)
+
+        if not filtered_data:
+            st.warning("No properties match your numeric constraints.")
+            st.stop()
+
+        # Build FAISS index
+        st.markdown("🔍 **Searching...**")
+        embedding_model = load_embedding_model()
+        embeddings = np.array([d['embedding'] for d in filtered_data]).astype('float32')
+        ids = [d['id'] for d in filtered_data]
+        index = build_faiss_index(embeddings)
+
+        # Query index
+        query_embedding = encode_query(
+            f"I'm specifically looking for an apartment that has: {rewritten}. This is a must-have feature.",
+            embedding_model
+        )
+        initial_results = query_index(index, query_embedding, filtered_data, ids, k=10, score_threshold=0.0)
+
+        # Rerank with CrossEncoder
+        if not initial_results:
+            st.warning("No results found after embedding search.")
+            st.stop()
+
+        st.markdown("📊 **Reranking results...**")
+        cross_model = CrossEncoder("cross-encoder/nli-roberta-base")
+        pairs = [(f"Required features: {rewritten}", r['data']['combined_text']) for r in initial_results]
+        cross_scores = cross_model.predict(pairs)
+
+        for i, r in enumerate(initial_results):
+            r['rerank_score'] = float(cross_scores[i][2])
+
+        reranked = sorted(initial_results, key=lambda x: x['rerank_score'], reverse=True)
+
+        # NLI contradiction filtering
+        st.markdown("🧠 **Filtering contradictions...**")
+        nli_tokenizer, nli_model = load_nli_model()
+        filtered_results = nli_contradiction_filter(rewritten, reranked, nli_tokenizer, nli_model)
+
+        if not filtered_results:
+            st.warning("No results remain after contradiction filtering.")
+            st.stop()
+
+        st.markdown("---")
+        st.markdown("### 🔎 Search Results")
+        for entry in filtered_results:
+            prop = entry['data']
+            with st.container():
+                st.markdown(f"### 🏡 {prop['title']}")
+                st.markdown(f"*{prop['short_description']}*")
+                st.markdown(f"📍 **Location:** {prop['location']}")
+                st.markdown(f"💰 **Price:** ${prop['price']:,}")
+                st.markdown(f"🛏️ **Bedrooms:** {prop['num_bedrooms']}  |  🛁 **Bathrooms:** {prop['num_bathrooms']}  |  🏢 **Floor:** {prop['floor']}")
+                st.markdown(f"📐 **Size:** {prop['size']} sq ft")
+
+                extras = []
+                if prop['balcony']:
+                    extras.append("🪟 Balcony")
+                if prop['parking']:
+                    extras.append("🅿️ Parking")
+                if extras:
+                    st.markdown("🔧 **Extras:** " + ", ".join(extras))
+
+                if prop["detected_features"]:
+                    st.markdown("### 🧠 Detected Features")
+                    for f in prop["detected_features"]:
+                        st.markdown(f"- **{f['item']}**: {f['description']}")
+
+                if prop["image_paths"]:
+                    st.markdown("### 🖼️ Uploaded Images")
+                    cols = st.columns(min(3, len(prop["image_paths"])))
+                    for i, img_url in enumerate(prop["image_paths"]):
+                        with cols[i % len(cols)]:
+                            st.image(img_url, use_container_width=True)
+
                 st.markdown("---")
-        else:
-            st.warning("Please enter a search query.")
-
 
 
