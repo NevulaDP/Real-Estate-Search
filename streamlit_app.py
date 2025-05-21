@@ -306,34 +306,36 @@ elif mode == "🔎 Search Properties":
             r['rerank_score'] = float(cross_scores[i][2])
 
         reranked = sorted(initial_results, key=lambda x: x['rerank_score'], reverse=True)
-
-        #########
-        # 🔎 Apply semantic similarity filtering
-        query_vector = query_embedding.reshape(1, -1)
-        embedding_matrix = np.array([r['data']['embedding'] for r in reranked])
-        similarity_scores = cosine_similarity(query_vector, embedding_matrix)[0]
-        
-        # Attach scores and filter
-        for i, r in enumerate(reranked):
-            r['semantic_similarity'] = float(similarity_scores[i])
-        
-        # Only keep results with decent match
-        similarity_threshold = 0.35  # You can tune this
-        reranked = [r for r in reranked if r['semantic_similarity'] >= similarity_threshold]
-        
-        # Optional: re-sort by similarity
-        reranked = sorted(reranked, key=lambda r: r['semantic_similarity'], reverse=True)
-        
-        # Abort early if nothing makes the cut
-        if not reranked:
-            status.empty()
-            st.warning("No properties are semantically similar to your request.")
-            st.stop()
-
-        with st.expander("🧠 Semantic Similarity Debug"):
-            for r in reranked:
-                st.write(f"🏡 {r['data']['title']} → Similarity: {r['semantic_similarity']:.3f}")
-
+        if not constraints_found:
+            #########
+            # 🔎 Apply semantic similarity filtering
+            query_vector = query_embedding.reshape(1, -1)
+            embedding_matrix = np.array([r['data']['embedding'] for r in reranked])
+            similarity_scores = cosine_similarity(query_vector, embedding_matrix)[0]
+            
+            # Attach scores and filter
+            for i, r in enumerate(reranked):
+                r['semantic_similarity'] = float(similarity_scores[i])
+            
+            # Only keep results with decent match
+            similarity_threshold = 0.3  # You can tune this
+            reranked = [r for r in reranked if r['semantic_similarity'] >= similarity_threshold]
+            
+            # Optional: re-sort by similarity
+            reranked = sorted(reranked, key=lambda r: r['semantic_similarity'], reverse=True)
+            
+            # Abort early if nothing makes the cut
+            if not reranked:
+                status.empty()
+                st.warning("No properties are semantically similar to your request.")
+                st.stop()
+    
+            with st.expander("🧠 Semantic Similarity Debug"):
+                for r in reranked:
+                    st.write(f"🏡 {r['data']['title']} → Similarity: {r['semantic_similarity']:.3f}")
+        else:
+            # Skip semantic filtering — use reranked as-is
+            pass
 
 
         #########
