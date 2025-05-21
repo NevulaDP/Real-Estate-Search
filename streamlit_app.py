@@ -291,7 +291,7 @@ elif mode == "🔎 Search Properties":
         #########
         with st.expander("🧪 NLI Debug Output"):
             st.write("Query:", rewritten)
-            for i, (r, logits) in enumerate(zip(results, scores)):
+            for i, (r, logits) in enumerate(zip(initial_results, scores)):
                 if isinstance(logits, float):
                     entailment_prob = logits
                     contradiction_prob = 1 - entailment_prob
