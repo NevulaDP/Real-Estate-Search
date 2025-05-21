@@ -9,7 +9,8 @@ def load_entries_from_hub(filename="property_db.json"):
         response.raise_for_status()  # will throw error on 403/404/etc
 
         # Print/log to verify it's pulling live
-        print("✅ Successfully pulled data from Hugging Face")
+        st.write("✅ Successfully pulled data from Hugging Face")
+        st.write(f"🔁 Found {len(existing_entries)} existing entries")
 
         return json.loads(response.text)
     except Exception as e:
