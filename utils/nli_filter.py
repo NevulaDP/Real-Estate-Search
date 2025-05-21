@@ -2,37 +2,43 @@
 
 import torch
 import streamlit as st
-from transformers import AutoTokenizer, AutoModelForSequenceClassification
+from sentence_transformers import CrossEncoder
 
-@st.cache_resource
-def load_nli_model():
-    tokenizer = AutoTokenizer.from_pretrained("cross-encoder/nli-roberta-base")
-    model = AutoModelForSequenceClassification.from_pretrained("cross-encoder/nli-roberta-base")
-    return tokenizer, model
+def nli_contradiction_filter(query, results, contradiction_threshold=0.2):
+    """
+    Filters out results that semantically contradict the user's query using a modern cross-encoder.
 
-def get_nli_scores(query, text, tokenizer, model):
-    inputs = tokenizer.encode_plus(query, text, return_tensors='pt', truncation=True)
-    with torch.no_grad():
-        logits = model(**inputs).logits
-    probs = torch.softmax(logits, dim=1)[0]
-    return {
-        "contradiction": probs[0].item(),
-        "neutral": probs[1].item(),
-        "entailment": probs[2].item()
-    }
+    Args:
+        query (str): The rewritten user query (e.g., "The property must have a kitchen island.")
+        results (list): List of dicts with structure {'data': ..., 'score': ..., etc.}
+        contradiction_threshold (float): Maximum contradiction score to allow a result through
 
-def nli_contradiction_filter(query, results, tokenizer, model, contradiction_threshold=0.1):
+    Returns:
+        list: Filtered and scored results
+    """
+    model_name = "cross-encoder/nli-deberta-v3-large"
+    cross_model = CrossEncoder(model_name)
+
+    # Prepare pairs: (query, property description)
+    pairs = [(query, r['data']['combined_text']) for r in results]
+
+    # Predict scores: returns [contradiction, neutral, entailment] for each pair
+    raw_scores = cross_model.predict(pairs)
+
     filtered = []
-    for r in results:
-        text = r['data']['combined_text']
-        scores = get_nli_scores(query, text, tokenizer, model)
+    for score_vec, result in zip(raw_scores, results):
+        contradiction_prob = float(score_vec[0])  # index 0 = contradiction
+        entailment_prob = float(score_vec[2])     # index 2 = entailment
 
-        if scores['contradiction'] < contradiction_threshold:
-            r['nli_scores'] = scores
-            r['nli_score'] = scores['entailment']
-            filtered.append(r)
+        if contradiction_prob < contradiction_threshold:
+            result['nli_score'] = entailment_prob
+            result['nli_scores'] = {
+                'contradiction': contradiction_prob,
+                'neutral': float(score_vec[1]),
+                'entailment': entailment_prob
+            }
+            filtered.append(result)
         else:
-            print(f"❌ CONTRADICTION: '{r['data']['title']}'")
+            print(f"❌ CONTRADICTED: {result['data']['title']}")
 
-        print(f"🏠 {r['data']['title']} → Contradiction: {scores['contradiction']:.3f} | Entailment: {scores['entailment']:.3f}")
     return filtered
