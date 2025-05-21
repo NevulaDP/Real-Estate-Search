@@ -29,19 +29,7 @@ def nli_contradiction_filter(query, results, model=None, contradiction_threshold
         else:
             print(f"❌ CONTRADICTION: {r['data']['title']} | Contradiction: {contradiction_prob:.2f}")
 
-    with st.expander("🧪 NLI Debug Output"):
-    st.write("Query:", query)
-    for i, (r, logits) in enumerate(zip(results, scores)):
-        if isinstance(logits, float):
-            entailment_prob = logits
-            contradiction_prob = 1 - entailment_prob
-        else:
-            contradiction_prob = logits[0]
-            entailment_prob = logits[2]
-
-        st.write(f"🧠 {r['data']['title']}")
-        st.write(f"- Contradiction: {contradiction_prob:.3f}")
-        st.write(f"- Entailment: {entailment_prob:.3f}")
+ 
 
     
     return filtered
