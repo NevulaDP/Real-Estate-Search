@@ -279,16 +279,14 @@ elif mode == "🔎 Search Properties":
 
         status.info("🔍 Searching...")
         embedding_model = load_embedding_model()
-        embeddings = np.array([ 
-        model.encode(d.get('short_text', d['combined_text'])).astype('float32') 
-        for d in filtered_data
+        embeddings = np.array([d['embedding'] for d in filtered_data]).astype('float32')
         ])#########
 
         ids = [d['id'] for d in filtered_data]
         index = build_faiss_index(embeddings)
 
         query_embedding = encode_query(
-            f"I'm specifically looking for an apartment that has: {rewritten}. This is a must-have feature.",
+            f"{rewritten}",
             embedding_model
         )
         initial_results = query_index(index, query_embedding, filtered_data, ids, k=10, score_threshold=0.0)
