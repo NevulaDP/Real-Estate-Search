@@ -374,7 +374,7 @@ elif mode == "🔎 Search Properties":
                 st.warning("No results remain after contradiction filtering.")
                 st.stop()
     
-                with st.container():
+                with st.container(border=True):
                                     st.markdown(f"### 🏡 {prop['title']}")
                                     st.markdown(f"*{prop['short_description']}*")
                                     st.markdown(f"📍 **Location:** {prop['location']}")
