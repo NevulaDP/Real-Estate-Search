@@ -20,20 +20,17 @@ def upload_image_to_hub(image_file, property_uuid, save_dir="temp_images"):
     )
     return f"https://huggingface.co/datasets/{HF_REPO_ID}/resolve/main/{hf_path}"
 
-def upload_json_to_hub(new_entries, filename="property_db.json"):
-    # Step 1: Load existing entries
+def upload_json_to_hub(new_entry, filename="property_db.json"):
     from utils.hf_loader import load_entries_from_hub
+
     existing_entries = load_entries_from_hub(filename)
-    print(f"🧠 Existing entries loaded: {len(existing_entries)}")  # Add this line DEBUG
+    print(f"🔁 Found {len(existing_entries)} existing entries")
 
-    # Step 2: Merge without duplicates
-    all_entries = existing_entries + new_entries if isinstance(new_entries, list) else existing_entries + [new_entries]
+    all_entries = existing_entries + [new_entry]
 
-    # Step 3: Save locally
     with open(filename, "w") as f:
         json.dump(all_entries, f, indent=2)
 
-    # Step 4: Upload to HF Hub
     upload_file(
         path_or_fileobj=filename,
         path_in_repo=filename,
