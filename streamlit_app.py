@@ -321,12 +321,14 @@ elif mode == "🔎 Search Properties":
             similarity_threshold = 0.4
             filtered_semantic = [r for r in reranked if r['semantic_similarity'] >= similarity_threshold]
             
+            if not filtered_semantic:
+                    st.warning("⚠️ Semantic check failed — using fallback to reranked results.")
+            
             # 🧠 Debug output
             with st.expander("🧠 Semantic Similarity Debug"):
                 for r in reranked:
                     st.write(f"🏡 {r['data']['title']} → Similarity: {r['semantic_similarity']:.3f}")
-                if not filtered_semantic:
-                    st.warning("⚠️ Semantic check failed — using fallback to reranked results.")
+               
             
             # Fallback if semantic check failed
             if filtered_semantic:
