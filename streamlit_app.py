@@ -230,7 +230,7 @@ elif mode == "🔎 Search Properties":
     from utils.query_rewrite import rewrite_query_with_constraints
     from utils.constraint_filter import extract_constraints_from_query, apply_constraint_filters
     from utils.search_embeddings import load_embedding_model, build_faiss_index, encode_query, query_index
-    from utils.nli_filter import load_nli_model, nli_contradiction_filter
+    from utils.nli_filter import nli_contradiction_filter
     from utils.hf_loader import load_entries_from_hub
     from sentence_transformers import CrossEncoder
 
