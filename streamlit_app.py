@@ -240,15 +240,14 @@ elif mode == "🔎 Search Properties":
 
     if user_query:
         st.markdown("---")
-        placeholder = st.empty()
+        status_box = st.empty()
+        rewritten_box = st.empty()
 
-        with placeholder.container():
-            st.write("🔄 Rewriting your query...")
+        status_box.info("🔄 Rewriting your query...")
         rewritten = rewrite_query_with_constraints(user_query)
+        rewritten_box.success(f"📌 *{rewritten}*")
 
-        with placeholder.container():
-            st.write("📌 Rewritten: ", rewritten)
-            st.write("📦 Loading property data...")
+        status_box.info("📦 Loading property data...")
         try:
             data = load_entries_from_hub()
         except:
@@ -258,6 +257,7 @@ elif mode == "🔎 Search Properties":
         constraints = extract_constraints_from_query(rewritten)
         if not any(constraints.values()):
             filtered_data = data
+            st.success("🟢 Skipping numeric filters (no constraints)")
         else:
             filtered_data = apply_constraint_filters(data, constraints)
 
@@ -265,8 +265,7 @@ elif mode == "🔎 Search Properties":
             st.warning("No properties match your query. Try simplifying it.")
             st.stop()
 
-        with placeholder.container():
-            st.write("🔍 Searching...")
+        status_box.info("🔍 Searching...")
         embedding_model = load_embedding_model()
         embeddings = np.array([d['embedding'] for d in filtered_data]).astype('float32')
         ids = [d['id'] for d in filtered_data]
@@ -282,8 +281,7 @@ elif mode == "🔎 Search Properties":
             st.warning("No results found after embedding search.")
             st.stop()
 
-        with placeholder.container():
-            st.write("📊 Reranking results...")
+        status_box.info("📊 Reranking results...")
         cross_model = CrossEncoder("cross-encoder/nli-roberta-base")
         pairs = [(f"Required features: {rewritten}", r['data']['combined_text']) for r in initial_results]
         cross_scores = cross_model.predict(pairs)
@@ -293,12 +291,11 @@ elif mode == "🔎 Search Properties":
 
         reranked = sorted(initial_results, key=lambda x: x['rerank_score'], reverse=True)
 
-        with placeholder.container():
-            st.write("🧠 Filtering contradictions...")
+        status_box.info("🧠 Filtering contradictions...")
         nli_tokenizer, nli_model = load_nli_model()
         filtered_results = nli_contradiction_filter(rewritten, reranked, nli_tokenizer, nli_model, contradiction_threshold=0.1)
 
-        placeholder.empty()  # Clear the loading messages
+        status_box.empty()
 
         if not filtered_results:
             st.warning("No results remain after contradiction filtering.")
