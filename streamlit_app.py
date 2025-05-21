@@ -267,6 +267,7 @@ elif mode == "🔎 Search Properties":
             st.stop()
 
         constraints = extract_constraints_from_query(rewritten)
+        constraints_found = any(constraints.values())
         if not any(constraints.values()):
             filtered_data = data
         else:
