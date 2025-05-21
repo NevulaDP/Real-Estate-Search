@@ -373,33 +373,36 @@ elif mode == "🔎 Search Properties":
             if not filtered_results:
                 st.warning("No results remain after contradiction filtering.")
                 st.stop()
+           
+            for entry in filtered_results:
+                prop = entry['data']  # ← this line is essential
     
-            with st.container():
-                st.markdown(f"### 🏡 {prop['title']}")
-                st.markdown(f"*{prop['short_description']}*")
-                st.markdown(f"📍 **Location:** {prop['location']}")
-                st.markdown(f"💰 **Price:** ${prop['price']:,}")
-                st.markdown(f"🛌 **Bedrooms:** {prop['num_bedrooms']}  |  🛁 **Bathrooms:** {prop['num_bathrooms']}  |  🏢 **Floor:** {prop['floor']}")
-                st.markdown(f"🖐️ **Size:** {prop['size']} sq ft")
-
-                extras = []
-                if prop['balcony']:
-                    extras.append("🪟 Balcony")
-                if prop['parking']:
-                    extras.append("🔃 Parking")
-                if extras:
-                    st.markdown("🔧 **Extras:** " + ", ".join(extras))
-
-                if prop["detected_features"]:
-                    st.markdown("### 🧠 Detected Features")
-                    for f in prop["detected_features"]:
-                        st.markdown(f"- **{f['item']}**: {f['description']}")
-
-                if prop["image_paths"]:
-                    st.markdown("### 🖼️ Uploaded Images")
-                    cols = st.columns(min(3, len(prop["image_paths"])))
-                    for i, img_url in enumerate(prop["image_paths"]):
-                        with cols[i % len(cols)]:
-                            st.image(img_url, use_container_width=True)
-
-                st.markdown("---")
+                with st.container():
+                    st.markdown(f"### 🏡 {prop['title']}")
+                    st.markdown(f"*{prop['short_description']}*")
+                    st.markdown(f"📍 **Location:** {prop['location']}")
+                    st.markdown(f"💰 **Price:** ${prop['price']:,}")
+                    st.markdown(f"🛌 **Bedrooms:** {prop['num_bedrooms']}  |  🛁 **Bathrooms:** {prop['num_bathrooms']}  |  🏢 **Floor:** {prop['floor']}")
+                    st.markdown(f"🖐️ **Size:** {prop['size']} sq ft")
+    
+                    extras = []
+                    if prop['balcony']:
+                        extras.append("🪟 Balcony")
+                    if prop['parking']:
+                        extras.append("🔃 Parking")
+                    if extras:
+                        st.markdown("🔧 **Extras:** " + ", ".join(extras))
+    
+                    if prop["detected_features"]:
+                        st.markdown("### 🧠 Detected Features")
+                        for f in prop["detected_features"]:
+                            st.markdown(f"- **{f['item']}**: {f['description']}")
+    
+                    if prop["image_paths"]:
+                        st.markdown("### 🖼️ Uploaded Images")
+                        cols = st.columns(min(3, len(prop["image_paths"])))
+                        for i, img_url in enumerate(prop["image_paths"]):
+                            with cols[i % len(cols)]:
+                                st.image(img_url, use_container_width=True)
+    
+                    st.markdown("---")
