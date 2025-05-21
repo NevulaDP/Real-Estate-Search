@@ -319,6 +319,9 @@ elif mode == "🔎 Search Properties":
             st.warning("No properties are semantically similar to your request.")
             st.stop()
 
+        with st.expander("🧠 Semantic Similarity Debug"):
+            for r in reranked:
+                st.write(f"🏡 {r['data']['title']} → Similarity: {r['semantic_similarity']:.3f}")
 
 
 
