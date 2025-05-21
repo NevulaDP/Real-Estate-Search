@@ -21,7 +21,7 @@ def get_nli_scores(query, text, tokenizer, model):
         "entailment": probs[2].item()
     }
 
-def nli_contradiction_filter(query, results, tokenizer, model, contradiction_threshold=0.15):
+def nli_contradiction_filter(query, results, tokenizer, model, contradiction_threshold=0.1):
     filtered = []
     for r in results:
         text = r['data']['combined_text']
