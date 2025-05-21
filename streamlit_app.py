@@ -246,7 +246,7 @@ elif mode == "🔎 Search Properties":
 
     col1, col2, col3 = st.columns([1, 2, 1])
     with col2:
-        st.title("🔎 Smart Property Search")
+        st.title("<h1 style='text-align: center;'>🔎 Smart Property Search</h1>", unsafe_allow_html=True)
         st.markdown("### Find the perfect property — just describe what you're looking for.")
         with st.container():
             st.markdown("<div style='margin-top: 1rem;'></div>", unsafe_allow_html=True)
