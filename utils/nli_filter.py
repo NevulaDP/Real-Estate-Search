@@ -2,25 +2,25 @@
 
 import torch
 import torch.nn.functional as F
-import streamlit as st
 from sentence_transformers import CrossEncoder
 
 def load_nli_model():
     return CrossEncoder("cross-encoder/nli-deberta-v3-large")
 
 def split_query(query):
-    # Split on period or "and" (basic version, can improve)
+    # Split on punctuation or "and" (expandable)
     parts = query.replace(" and ", ".").split(".")
     return [p.strip() for p in parts if p.strip()]
 
-def nli_contradiction_filter(query, results, model, contradiction_threshold=0.2):
+def nli_contradiction_filter(query, results, model, contradiction_threshold=0.01, entailment_threshold=0.5):
     from sentence_transformers.util import batch_to_device
 
     sub_queries = split_query(query)
 
+    filtered = []
     for r in results:
-        entailment_scores = []
-        contradiction_flags = []
+        all_entailments = []
+        all_contradictions = []
 
         for sub_q in sub_queries:
             inputs = model.tokenizer(
@@ -36,14 +36,19 @@ def nli_contradiction_filter(query, results, model, contradiction_threshold=0.2)
                 logits = model.model(**inputs).logits
 
             probs = F.softmax(logits, dim=1).cpu().numpy()[0]
-            entailment_scores.append(probs[2])  # entailment
-            contradiction_flags.append(probs[0] < contradiction_threshold)
+            all_entailments.append(probs[2])      # entailment
+            all_contradictions.append(probs[0])   # contradiction
+
+        avg_entailment = sum(all_entailments) / len(all_entailments)
+        max_contradiction = max(all_contradictions)
 
         r['nli_scores'] = {
-            'contradiction': 1.0 - min(contradiction_flags),  # 0 if any contradict, else 1
-            'entailment': sum(entailment_scores) / len(entailment_scores)
+            'contradiction': float(max_contradiction),
+            'entailment': float(avg_entailment)
         }
-        r['nli_score'] = r['nli_scores']['entailment']
+        r['nli_score'] = float(avg_entailment)
 
-    # Only return if *none* of the subqueries contradict
-    return [r for r in results if all(r['nli_scores']['contradiction'])]
+        if max_contradiction < contradiction_threshold and avg_entailment >= entailment_threshold:
+            filtered.append(r)
+
+    return filtered
