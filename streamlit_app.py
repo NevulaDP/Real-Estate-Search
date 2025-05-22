@@ -48,39 +48,66 @@ if "mode" not in st.session_state:
 st.sidebar.markdown("""
     <style>
         .sidebar-title {
-            font-size: 1.5rem;
-            font-weight: bold;
-            margin-bottom: 1rem;
+            font-size: 1.6rem;
+            font-weight: 800;
+            text-align: center;
+            margin-bottom: 1.5rem;
         }
-        .sidebar-btn {
-            display: block;
+        .stButton > button {
             width: 100%;
-            text-align: left;
             padding: 0.75rem 1rem;
-            margin-bottom: 0.5rem;
-            border: none;
-            background-color: #2e2e2e;
-            color: white;
-            border-radius: 8px;
+            margin-bottom: 0.75rem;
             font-size: 1rem;
-            transition: 0.2s ease;
+            font-weight: 600;
+            color: white;
+            background-color: #2e2e2e;
+            border: 2px solid #444;
+            border-radius: 10px;
+            text-align: left;
+            transition: 0.2s ease-in-out;
         }
-        .sidebar-btn:hover {
-            background-color: #444;
-            cursor: pointer;
+        .stButton > button:hover {
+            background-color: #008eed;
+            border-color: #008eed;
+        }
+        .stButton.active > button {
+            background-color: #008eed !important;
+            color: ddd !important;
+            border-color: #008eed;
         }
     </style>
 """, unsafe_allow_html=True)
 
 st.sidebar.markdown('<div class="sidebar-title">🏡 Property Matcher</div>', unsafe_allow_html=True)
 
-upload = st.sidebar.button("🏠 Upload Property", key="upload_btn")
-search = st.sidebar.button("🔍 Search Properties", key="search_btn")
-
-if upload:
-    st.session_state.mode = "Upload"
-if search:
+# Ensure mode is initialized
+if "mode" not in st.session_state:
     st.session_state.mode = "Search"
+
+# Create buttons and wrap in containers for styling
+upload_btn = st.sidebar.container()
+search_btn = st.sidebar.container()
+
+with upload_btn:
+    if st.button("🏠 Upload Property"):
+        st.session_state.mode = "Upload"
+with search_btn:
+    if st.button("🔍 Search Properties"):
+        st.session_state.mode = "Search"
+
+# Add 'active' class using JS
+st.sidebar.markdown(f"""
+    <script>
+    const buttons = window.parent.document.querySelectorAll('.stButton');
+    if (buttons.length >= 2) {{
+        buttons[0].classList.remove("active");
+        buttons[1].classList.remove("active");
+
+        {"buttons[0].classList.add('active');" if st.session_state.mode == "Upload" else ""}
+        {"buttons[1].classList.add('active');" if st.session_state.mode == "Search" else ""}
+    }}
+    </script>
+""", unsafe_allow_html=True)
 
 mode = st.session_state.mode
 #----------------#
