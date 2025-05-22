@@ -8,35 +8,42 @@ from sentence_transformers import CrossEncoder
 def load_nli_model():
     return CrossEncoder("cross-encoder/nli-deberta-v3-large")
 
+def split_query(query):
+    # Split on period or "and" (basic version, can improve)
+    parts = query.replace(" and ", ".").split(".")
+    return [p.strip() for p in parts if p.strip()]
+
 def nli_contradiction_filter(query, results, model, contradiction_threshold=0.2):
     from sentence_transformers.util import batch_to_device
 
-    premises = [query] * len(results)
-    hypotheses = [r['data']['combined_text'] for r in results]
+    sub_queries = split_query(query)
 
-    # Prepare inputs
-    model_inputs = model.tokenizer(premises, hypotheses, padding=True, truncation=True, return_tensors="pt")
-    model_inputs = batch_to_device(model_inputs, model.model.device)
+    for r in results:
+        entailment_scores = []
+        contradiction_flags = []
 
-    with torch.no_grad():
-        logits = model.model(**model_inputs).logits
+        for sub_q in sub_queries:
+            inputs = model.tokenizer(
+                sub_q,
+                r['data']['combined_text'],
+                padding=True,
+                truncation=True,
+                return_tensors="pt"
+            )
+            inputs = inputs.to(model.model.device)
 
-    # Convert logits to probabilities using softmax
-    probs = F.softmax(logits, dim=1).cpu().numpy()
+            with torch.no_grad():
+                logits = model.model(**inputs).logits
 
-    filtered = []
-    for i, r in enumerate(results):
-        contradiction_prob = probs[i][0]
-        entailment_prob = probs[i][2]
+            probs = F.softmax(logits, dim=1).cpu().numpy()[0]
+            entailment_scores.append(probs[2])  # entailment
+            contradiction_flags.append(probs[0] < contradiction_threshold)
 
         r['nli_scores'] = {
-            'contradiction': float(contradiction_prob),
-            'neutral': float(probs[i][1]),
-            'entailment': float(entailment_prob)
+            'contradiction': 1.0 - min(contradiction_flags),  # 0 if any contradict, else 1
+            'entailment': sum(entailment_scores) / len(entailment_scores)
         }
-        r['nli_score'] = float(entailment_prob)
+        r['nli_score'] = r['nli_scores']['entailment']
 
-        if contradiction_prob < contradiction_threshold:
-            filtered.append(r)
-
-    return filtered
+    # Only return if *none* of the subqueries contradict
+    return [r for r in results if all(r['nli_scores']['contradiction'])]
