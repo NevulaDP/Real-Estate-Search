@@ -5,6 +5,7 @@ import google.generativeai as palm
 from sentence_transformers import SentenceTransformer
 import os # Monitor
 import psutil # Monitor
+import gc
 
 from utils.features import extract_features, generate_combined_text, generate_short_text
 from utils.database import create_property_entry
@@ -245,7 +246,6 @@ elif mode == "🔎 Search Properties":
     import json
     import numpy as np
     import streamlit as st
-    import gc
     import torch
 
     from utils.query_rewrite import rewrite_query_with_constraints
@@ -338,7 +338,7 @@ elif mode == "🔎 Search Properties":
                 for i, r in enumerate(reranked):
                     r['semantic_similarity'] = float(similarity_scores[i])
                 
-                similarity_threshold = 0.4
+                similarity_threshold = 0.35
                 filtered_semantic = [r for r in reranked if r['semantic_similarity'] >= similarity_threshold]
                 
                 if not filtered_semantic:
