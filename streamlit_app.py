@@ -246,6 +246,7 @@ elif mode == "🔎 Search Properties":
     import numpy as np
     import streamlit as st
     import gc
+    import torch
 
     from utils.query_rewrite import rewrite_query_with_constraints
     from utils.constraint_filter import extract_constraints_from_query, apply_constraint_filters
