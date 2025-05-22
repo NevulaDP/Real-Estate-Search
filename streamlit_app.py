@@ -245,6 +245,7 @@ elif mode == "🔎 Search Properties":
     import json
     import numpy as np
     import streamlit as st
+    import gc
 
     from utils.query_rewrite import rewrite_query_with_constraints
     from utils.constraint_filter import extract_constraints_from_query, apply_constraint_filters
@@ -383,9 +384,7 @@ elif mode == "🔎 Search Properties":
             if not filtered_results:
                 st.warning("No results remain after contradiction filtering.")
                 st.stop()
-            mem, cpu = log_resource_usage()
-            st.write(f"📊 Memory usage: {mem:.2f} MB")
-            st.write(f"⚙️ CPU usage: {cpu:.2f}%")
+            
            
             for entry in filtered_results:
                 prop = entry['data']  # ← this line is essential
@@ -417,5 +416,14 @@ elif mode == "🔎 Search Properties":
                         for i, img_url in enumerate(prop["image_paths"]):
                             with cols[i % len(cols)]:
                                 st.image(img_url, use_container_width=True)
-    
-                    
+           
+            
+            # Force garbage collection
+            gc.collect()
+            
+            # Clear GPU cache if you're using a model on CUDA
+            if torch.cuda.is_available():
+                torch.cuda.empty_cache()
+            mem, cpu = log_resource_usage()
+            st.write(f"📊 Memory usage: {mem:.2f} MB")
+            st.write(f"⚙️ CPU usage: {cpu:.2f}%")
