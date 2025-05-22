@@ -420,6 +420,7 @@ elif mode == "🔎 Search Properties":
            
             
             # Force garbage collection
+            del embeddings, index, query_embedding, initial_results, reranked
             gc.collect()
             
             # Clear GPU cache if you're using a model on CUDA
