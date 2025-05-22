@@ -42,13 +42,50 @@ if "pending_features" not in st.session_state:
 if "form_inputs" not in st.session_state:
     st.session_state.form_inputs = {}
 
-
+if "mode" not in st.session_state:
+    st.session_state.mode = "Search"
 # --- SIDEBAR ---#
-st.sidebar.title("Property Matcher")
-#st.sidebar.markdown("### 🔍 Navigation")
-mode = st.sidebar.radio("Go to:",["🏡 Upload Property", "🔎 Search Properties"])
+st.sidebar.markdown("""
+    <style>
+        .sidebar-title {
+            font-size: 1.5rem;
+            font-weight: bold;
+            margin-bottom: 1rem;
+        }
+        .sidebar-btn {
+            display: block;
+            width: 100%;
+            text-align: left;
+            padding: 0.75rem 1rem;
+            margin-bottom: 0.5rem;
+            border: none;
+            background-color: #2e2e2e;
+            color: white;
+            border-radius: 8px;
+            font-size: 1rem;
+            transition: 0.2s ease;
+        }
+        .sidebar-btn:hover {
+            background-color: #444;
+            cursor: pointer;
+        }
+    </style>
+""", unsafe_allow_html=True)
 
-if mode == "🏡 Upload Property":
+st.sidebar.markdown('<div class="sidebar-title">🏡 Property Matcher</div>', unsafe_allow_html=True)
+
+upload = st.sidebar.button("🏠 Upload Property", key="upload_btn")
+search = st.sidebar.button("🔍 Search Properties", key="search_btn")
+
+if upload:
+    st.session_state.mode = "Upload"
+if search:
+    st.session_state.mode = "Search"
+
+mode = st.session_state.mode
+#----------------#
+
+if mode == "Upload":
     # --- Handle upload stage logic ---
     if "upload_stage" not in st.session_state:
         st.session_state.upload_stage = "form"
@@ -242,7 +279,7 @@ if mode == "🏡 Upload Property":
 
 
 
-elif mode == "🔎 Search Properties":
+elif mode == "Search":
     import json
     import numpy as np
     import streamlit as st
@@ -275,7 +312,7 @@ elif mode == "🔎 Search Properties":
             with st.container(border=True):
                 st.markdown(f"""
                     <div style='text-align: center; margin-bottom: 0.5rem;'>
-                        <span style='color: #549ff0; font-weight: 600; font-size: 1rem;'>Refined query</span>
+                        <span style='color: #549ff0; font-weight: 800; font-size: 1.3rem;'>Refined Query</span>
                     </div>
                     <blockquote style='
                         margin: 1 auto;
@@ -410,11 +447,11 @@ elif mode == "🔎 Search Properties":
                 st.stop()
             
            
-            for entry in filtered_results:
+            for i, entry in enumerate(filtered_results, start=1):
                 prop = entry['data']  # ← this line is essential
     
                 with st.container(border=True):
-                    st.markdown(f"### 🏡 {prop['title']}")
+                    st.markdown(f"### {i}. {prop['title']}")
                     st.markdown(f"*{prop['short_description']}*")
                     st.markdown(f"📍 **Location:** {prop['location']}")
                     st.markdown(f"💰 **Price:** ${prop['price']:,}")
