@@ -338,16 +338,16 @@ elif mode == "🔎 Search Properties":
                 for i, r in enumerate(reranked):
                     r['semantic_similarity'] = float(similarity_scores[i])
                 
-                similarity_threshold = 0.35
+                similarity_threshold = 0.4
                 filtered_semantic = [r for r in reranked if r['semantic_similarity'] >= similarity_threshold]
                 
                 if not filtered_semantic:
                         st.warning("✨ We didn’t find a perfect match, but here are the most relevant properties we found.")
                 #DEBUG
-                # 🧠 Debug output
-                #with st.expander("🧠 Semantic Similarity Debug"):
-                #   for r in reranked:
-                #       st.write(f"🏡 {r['data']['title']} → Similarity: {r['semantic_similarity']:.3f}")
+                 🧠 Debug output
+                with st.expander("🧠 Semantic Similarity Debug"):
+                   for r in reranked:
+                       st.write(f"🏡 {r['data']['title']} → Similarity: {r['semantic_similarity']:.3f}")
                   
                 
                 # Fallback if semantic check failed
@@ -374,13 +374,13 @@ elif mode == "🔎 Search Properties":
     
             ##########
             
-            #with st.expander("🧪 NLI Debug Output"):
-            #    st.write("Query:", rewritten)
-            #    for r in reranked:
-            #        scores = r.get("nli_scores", {})
-            #        st.write(f"🧠 {r['data']['title']}")
-            #        st.write(f"- Contradiction: {scores.get('contradiction', 0):.3f}")
-            #        st.write(f"- Entailment: {scores.get('entailment', 0):.3f}")
+            with st.expander("🧪 NLI Debug Output"):
+                st.write("Query:", rewritten)
+                for r in reranked:
+                    scores = r.get("nli_scores", {})
+                    st.write(f"🧠 {r['data']['title']}")
+                    st.write(f"- Contradiction: {scores.get('contradiction', 0):.3f}")
+                    st.write(f"- Entailment: {scores.get('entailment', 0):.3f}")
             
             ##########
     
