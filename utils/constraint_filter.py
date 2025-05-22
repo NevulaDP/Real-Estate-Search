@@ -56,7 +56,7 @@ def extract_constraints_from_query(query):
         constraints["min_size"] = int(match_min_size.group(1))
 
     # --- BEDROOMS ---
-    match_min_beds = re.search(r'(?:at least|minimum of|more than)\s*(\d+)\s*(?:bedroom|bedrooms)', query)
+    match_min_beds = re.search(r'(?:at least|minimum of|more than)[^\d]{0,15}(\d+)[^\w]{0,5}(?:bedroom|bedrooms)', query)
     if match_min_beds:
         constraints["min_bedrooms"] = int(match_min_beds.group(1))
 
