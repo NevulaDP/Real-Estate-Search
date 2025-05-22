@@ -3,6 +3,8 @@ from PIL import Image
 import uuid
 import google.generativeai as palm
 from sentence_transformers import SentenceTransformer
+import os # Monitor
+import psutil # Monitor
 
 from utils.features import extract_features, generate_combined_text, generate_short_text
 from utils.database import create_property_entry
@@ -12,6 +14,14 @@ from utils.hf_loader import load_entries_from_hub
 
 # Configure Gemini
 palm.configure(api_key=st.secrets["GOOGLE_API_KEY"])
+
+#Monitor
+
+def log_resource_usage():
+    process = psutil.Process(os.getpid())
+    mem = process.memory_info().rss / (1024 ** 2)  # in MB
+    cpu = process.cpu_percent(interval=0.1)
+    return mem, cpu
 
 @st.cache_resource
 def load_embedding_model():
@@ -373,6 +383,9 @@ elif mode == "🔎 Search Properties":
             if not filtered_results:
                 st.warning("No results remain after contradiction filtering.")
                 st.stop()
+            mem, cpu = log_resource_usage()
+            st.write(f"📊 Memory usage: {mem:.2f} MB")
+            st.write(f"⚙️ CPU usage: {cpu:.2f}%")
            
             for entry in filtered_results:
                 prop = entry['data']  # ← this line is essential
