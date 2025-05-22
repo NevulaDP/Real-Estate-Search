@@ -424,7 +424,6 @@ elif mode == "🔎 Search Properties":
             del cross_model
             del pairs, cross_scores
             gc.collect()
-            st.cache_resource.clear()
             
             # Clear GPU cache if you're using a model on CUDA
             if torch.cuda.is_available():
