@@ -260,22 +260,41 @@ elif mode == "🔎 Search Properties":
     with col2:
         st.markdown("<h1 style='text-align: center;'>🔎 Smart Property Search</h1>", unsafe_allow_html=True)
         st.markdown("<h4 style='text-align: center;'>Find the perfect property — just describe what you're looking for</h4>", unsafe_allow_html=True)
+        st.markdown("---")
         with st.container():
-            st.markdown("<div style='margin-top: 1rem;'></div>", unsafe_allow_html=True)
+            st.markdown("<div style='margin-top: 0rem;'></div>", unsafe_allow_html=True)
             user_query = st.text_input("What are you looking for in a property?", placeholder="e.g., modern apartment in Tel Aviv with balcony, under $2M")
-            st.markdown("<div style='margin-top: 1rem;'></div>", unsafe_allow_html=True)
+            #st.markdown("<div style='margin-top: 1rem;'></div>", unsafe_allow_html=True)
     
         if user_query:
-            st.markdown("---")
             status = st.empty()
     
-            status.info("🔄 Rewriting your query...")
+            
             rewritten = rewrite_query_with_constraints(user_query)
             status.empty()
-    
-            st.markdown(f"> *{rewritten}*", unsafe_allow_html=True)
-
-    
+            with st.container(border=True):
+                st.markdown(f"""
+                    <div style='text-align: center; margin-bottom: 0.5rem;'>
+                        <span style='color: #549ff0; font-weight: 600; font-size: 1rem;'>Refined query</span>
+                    </div>
+                    <blockquote style='
+                        margin: 1 auto;
+                        padding: 0.75rem 1.25rem;
+                        background-color: rgba(255, 255, 255, 0.03);
+                        border-left: 4px solid #549ff0;
+                        border-right: 4px solid #549ff0;
+                        font-style: italic;
+                        text-align: center;
+                        color: #549ff0;
+                        font-size: 0.95rem;
+                    '>
+                        {rewritten}
+                    </blockquote>
+                """, unsafe_allow_html=True)
+                #st.markdown(f"> *{rewritten}*", unsafe_allow_html=True)
+            st.markdown("<div style='margin-top: 0.75rem'></div>", unsafe_allow_html=True)
+            status = st.empty()
+            status.info("🔄 Rewriting your query...")
             status.info("📦 Loading property data...")
             try:
                 data = load_entries_from_hub()
@@ -345,9 +364,9 @@ elif mode == "🔎 Search Properties":
                         st.warning("✨ We didn’t find a perfect match, but here are the most relevant properties we found.")
                 #DEBUG
                 #🧠 Debug output
-                with st.expander("🧠 Semantic Similarity Debug"):
-                   for r in reranked:
-                       st.write(f"🏡 {r['data']['title']} → Similarity: {r['semantic_similarity']:.3f}")
+                #with st.expander("🧠 Semantic Similarity Debug"):
+                #   for r in reranked:
+                #       st.write(f"🏡 {r['data']['title']} → Similarity: {r['semantic_similarity']:.3f}")
                   
                 
                 # Fallback if semantic check failed
@@ -374,13 +393,13 @@ elif mode == "🔎 Search Properties":
     
             ##########
             
-            with st.expander("🧪 NLI Debug Output"):
-                st.write("Query:", rewritten)
-                for r in reranked:
-                    scores = r.get("nli_scores", {})
-                    st.write(f"🧠 {r['data']['title']}")
-                    st.write(f"- Contradiction: {scores.get('contradiction', 0):.3f}")
-                    st.write(f"- Entailment: {scores.get('entailment', 0):.3f}")
+            #with st.expander("🧪 NLI Debug Output"):
+            #    st.write("Query:", rewritten)
+            #    for r in reranked:
+            #        scores = r.get("nli_scores", {})
+            #        st.write(f"🧠 {r['data']['title']}")
+            #        st.write(f"- Contradiction: {scores.get('contradiction', 0):.3f}")
+            #        st.write(f"- Entailment: {scores.get('entailment', 0):.3f}")
             
             ##########
     
