@@ -7,6 +7,7 @@ import os # Monitor
 import psutil # Monitor
 import gc
 
+
 from utils.features import extract_features, generate_combined_text, generate_short_text
 from utils.database import create_property_entry
 from utils.hf_uploader import upload_image_to_hub, upload_json_to_hub
@@ -57,11 +58,11 @@ st.sidebar.markdown("""
             width: 100%;
             padding: 0.75rem 1rem;
             margin-bottom: 0.75rem;
-            font-size: 1rem;
+            font-size: 1.3rem;
             font-weight: 600;
             color: white;
             background-color: #2e2e2e;
-            border: 2px solid #444;
+            border: 2px solid #325d7a;
             border-radius: 10px;
             text-align: left;
             transition: 0.2s ease-in-out;
@@ -69,10 +70,11 @@ st.sidebar.markdown("""
         .stButton > button:hover {
             background-color: #008eed;
             border-color: #008eed;
+            color: #ddd;
         }
         .stButton.active > button {
             background-color: #008eed !important;
-            color: ddd !important;
+            color: #ddd !important;
             border-color: #008eed;
         }
     </style>
@@ -89,10 +91,10 @@ upload_btn = st.sidebar.container()
 search_btn = st.sidebar.container()
 
 with upload_btn:
-    if st.button("🏠 Upload Property"):
+    if st.button("Upload Property"):
         st.session_state.mode = "Upload"
 with search_btn:
-    if st.button("🔍 Search Properties"):
+    if st.button("Search Properties"):
         st.session_state.mode = "Search"
 
 # Add 'active' class using JS
