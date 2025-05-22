@@ -65,11 +65,11 @@ def extract_constraints_from_query(query):
         constraints["max_bedrooms"] = int(match_max_beds.group(1))
 
     # --- BATHROOMS ---
-    match_min_baths = re.search(r'(?:at least|minimum of|more than)\s*(\d+)\s*(?:bathroom|bathrooms)', query)
+    match_min_baths = re.search(r'(?:at least|a minimum of|minimum of|more than)\s*(\d+)\s*(?:bathroom|bathrooms)', query)
     if match_min_baths:
         constraints["min_bathrooms"] = int(match_min_baths.group(1))
 
-    match_max_baths = re.search(r'(?:maximum of|less than|under)\s*(\d+)\s*(?:bathroom|bathrooms)', query)
+    match_max_baths = re.search(r'(?:maximum of|a maximum of|less than|under)\s*(\d+)\s*(?:bathroom|bathrooms)', query)
     if match_max_baths:
         constraints["max_bathrooms"] = int(match_max_baths.group(1))
 
