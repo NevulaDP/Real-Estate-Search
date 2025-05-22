@@ -330,6 +330,9 @@ elif mode == "🔎 Search Properties":
                 query_vector = query_embedding.reshape(1, -1)
                 embedding_matrix = np.array([r['data']['embedding'] for r in reranked])
                 similarity_scores = cosine_similarity(query_vector, embedding_matrix)[0]
+
+                del query_vector, embedding_matrix
+                gc.collect()
                 
                 # Attach scores
                 for i, r in enumerate(reranked):
@@ -360,7 +363,8 @@ elif mode == "🔎 Search Properties":
                 # Skip semantic filtering — use reranked as-is
                 pass
     
-    
+            
+            
             #########
     
             status.info("🧠 Filtering contradictions...")
@@ -420,7 +424,7 @@ elif mode == "🔎 Search Properties":
            
             
             # Force garbage collection
-            del embeddings, index, query_embedding, initial_results, reranked, query_vector, embedding_matrix               
+            del embeddings, index, query_embedding, initial_results, reranked             
             del cross_model
             del pairs, cross_scores
             del nli_model
