@@ -55,6 +55,24 @@ def extract_constraints_from_query(query):
     if match_min_size:
         constraints["min_size"] = int(match_min_size.group(1))
 
+    # --- BEDROOMS ---
+    match_min_beds = re.search(r'(?:at least|minimum of|more than)\s*(\d+)\s*(?:bedroom|bedrooms)', query)
+    if match_min_beds:
+        constraints["min_bedrooms"] = int(match_min_beds.group(1))
+
+    match_max_beds = re.search(r'(?:maximum of|less than|under)\s*(\d+)\s*(?:bedroom|bedrooms)', query)
+    if match_max_beds:
+        constraints["max_bedrooms"] = int(match_max_beds.group(1))
+
+    # --- BATHROOMS ---
+    match_min_baths = re.search(r'(?:at least|minimum of|more than)\s*(\d+)\s*(?:bathroom|bathrooms)', query)
+    if match_min_baths:
+        constraints["min_bathrooms"] = int(match_min_baths.group(1))
+
+    match_max_baths = re.search(r'(?:maximum of|less than|under)\s*(\d+)\s*(?:bathroom|bathrooms)', query)
+    if match_max_baths:
+        constraints["max_bathrooms"] = int(match_max_baths.group(1))
+
     return constraints
 
 def apply_constraint_filters(data, constraints):
@@ -67,4 +85,12 @@ def apply_constraint_filters(data, constraints):
         filtered = [d for d in filtered if d.get("size", 0) < constraints["max_size"]]
     if "min_size" in constraints:
         filtered = [d for d in filtered if d.get("size", 0) > constraints["min_size"]]
+    if "min_bedrooms" in constraints:
+        filtered = [d for d in filtered if d.get("num_bedrooms", 0) >= constraints["min_bedrooms"]]
+    if "max_bedrooms" in constraints:
+        filtered = [d for d in filtered if d.get("num_bedrooms", 0) <= constraints["max_bedrooms"]]
+    if "min_bathrooms" in constraints:
+        filtered = [d for d in filtered if d.get("num_bathrooms", 0) >= constraints["min_bathrooms"]]
+    if "max_bathrooms" in constraints:
+        filtered = [d for d in filtered if d.get("num_bathrooms", 0) <= constraints["max_bathrooms"]]
     return filtered
