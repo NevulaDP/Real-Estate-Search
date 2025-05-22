@@ -1,0 +1,32 @@
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+*.so
+
+# Virtual environment
+venv/
+.env/
+.venv/
+
+# Streamlit secrets
+.streamlit/secrets.toml
+
+# System files
+.DS_Store
+Thumbs.db
+
+# IDE configs (optional)
+.vscode/
+.idea/
+
+# Jupyter notebook checkpoints (if any)
+.ipynb_checkpoints/
+
+# Cache
+*.log
+*.tmp
+*.bak
+.cache/
+logs/
