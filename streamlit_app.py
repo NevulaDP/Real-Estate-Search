@@ -423,6 +423,7 @@ elif mode == "🔎 Search Properties":
             del embeddings, index, query_embedding, initial_results, reranked
             del cross_model
             del pairs, cross_scores
+            del nli_model
             gc.collect()
             
             # Clear GPU cache if you're using a model on CUDA
