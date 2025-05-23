@@ -452,7 +452,7 @@ elif mode == "Search":
             status.info("🧠 Filtering contradictions...")
             #nli_tokenizer, nli_model = load_nli_model()
             nli_model = load_nli_model()
-            filtered_results = nli_contradiction_filter(rewritten, reranked, model=nli_model, contradiction_threshold=0.1)
+            filtered_results = nli_contradiction_filter(rewritten, reranked, model=nli_model, contradiction_threshold=0.13)
             filtered_results = sorted(filtered_results, key=lambda x: x['rerank_score'], reverse=True)
             ##########
             
@@ -493,7 +493,7 @@ elif mode == "Search":
                         st.markdown("🔧 **Extras:** " + ", ".join(extras))
     
                     if prop["detected_features"]:
-                        st.markdown("### 🧠 Detected Features")
+                        st.markdown("### 🧠 Included Features")
                         for f in prop["detected_features"]:
                             st.markdown(f"- **{f['item']}**: {f['description']}")
     
