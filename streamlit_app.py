@@ -315,7 +315,7 @@ elif mode == "Search":
     import torch
 
     from utils.query_rewrite import rewrite_query_with_constraints
-    from utils.constraint_filter import extract_constraints_from_query, apply_constraint_filters
+    from utils.constraint_filter import extract_constraints_from_query, apply_constraint_filters, filter_semantic_subqueries
     from utils.search_embeddings import load_embedding_model, build_faiss_index, encode_query, query_index
     from utils.nli_filter import nli_contradiction_filter, load_nli_model
     from utils.hf_loader import load_entries_from_hub
@@ -392,7 +392,7 @@ elif mode == "Search":
                 f"{rewritten}",
                 embedding_model
             )
-            initial_results = query_index(index, query_embedding, filtered_data, ids, k=10, score_threshold=0.0)
+            initial_results = query_index(index, query_embedding, filtered_data, ids, k=5, score_threshold=0.0)
     
             if not initial_results:
                 status.empty()
@@ -401,7 +401,7 @@ elif mode == "Search":
     
             status.info("📊 Reranking results...")
             cross_model = CrossEncoder("cross-encoder/nli-deberta-v3-large")
-            pairs = [(f"Required features: {rewritten}", r['data']['combined_text']) for r in initial_results]
+            pairs = [(f"Required features: {rewritten}", r['data']['short_text']) for r in initial_results]
             cross_scores = cross_model.predict(pairs)
     
     
@@ -409,44 +409,41 @@ elif mode == "Search":
                 r['rerank_score'] = float(cross_scores[i][2])
     
             reranked = sorted(initial_results, key=lambda x: x['rerank_score'], reverse=True)
+            sub_queries_to_check = []
+
             if not constraints_found:
-                #########
-                # 🔎 Apply semantic similarity filtering
-                query_vector = query_embedding.reshape(1, -1)
+                # No constraints? Use full rewritten query
+                sub_queries_to_check = [rewritten]
+            else:
+                # Use only the non-quantified subqueries
+                sub_queries_to_check = filter_semantic_subqueries(rewritten, constraints)
+
+            if sub_queries_to_check:
+                status.info("🔎 Running semantic similarity filter...")
+
+                semantic_focus = ". ".join(sub_queries_to_check)
+                query_vector = embedding_model.encode(semantic_focus).reshape(1, -1)
                 embedding_matrix = np.array([r['data']['embedding'] for r in reranked])
                 similarity_scores = cosine_similarity(query_vector, embedding_matrix)[0]
 
                 del query_vector, embedding_matrix
                 gc.collect()
-                
-                # Attach scores
+
                 for i, r in enumerate(reranked):
                     r['semantic_similarity'] = float(similarity_scores[i])
-                
-                similarity_threshold = 0.4
+
+                similarity_threshold = 0.33
                 filtered_semantic = [r for r in reranked if r['semantic_similarity'] >= similarity_threshold]
-                
+
                 if not filtered_semantic:
-                        st.warning("✨ We didn’t find a perfect match, but here are the most relevant properties we found.")
-                #DEBUG
-                #🧠 Debug output
-                #with st.expander("🧠 Semantic Similarity Debug"):
-                #   for r in reranked:
-                #       st.write(f"🏡 {r['data']['title']} → Similarity: {r['semantic_similarity']:.3f}")
-                  
-                
-                # Fallback if semantic check failed
+                    st.warning("✨ We didn’t find a perfect match, but here are the most relevant properties we found.")
+
                 if filtered_semantic:
                     reranked = sorted(filtered_semantic, key=lambda r: r['semantic_similarity'], reverse=True)
-                # else keep reranked as-is (fallback)
-                # DEBUG
-                #with st.expander("🧠 Semantic Similarity Debug"):
-                #    for r in reranked:
-                #        st.write(f"🏡 {r['data']['title']} → Similarity: {r['semantic_similarity']:.3f}")
-            
-            else:
-                # Skip semantic filtering — use reranked as-is
-                pass
+
+                with st.expander("🧠 Semantic Similarity Debug"):
+                    for r in reranked:
+                        st.write(f"🏡 {r['data']['title']} → Similarity: {r['semantic_similarity']:.3f}")
     
             
             
@@ -455,17 +452,17 @@ elif mode == "Search":
             status.info("🧠 Filtering contradictions...")
             #nli_tokenizer, nli_model = load_nli_model()
             nli_model = load_nli_model()
-            filtered_results = nli_contradiction_filter(rewritten, reranked, model=nli_model, contradiction_threshold=0.2)
-    
+            filtered_results = nli_contradiction_filter(rewritten, reranked, model=nli_model, contradiction_threshold=0.1)
+            filtered_results = sorted(filtered_results, key=lambda x: x['rerank_score'], reverse=True)
             ##########
             
-            #with st.expander("🧪 NLI Debug Output"):
-            #    st.write("Query:", rewritten)
-            #    for r in reranked:
-            #        scores = r.get("nli_scores", {})
-            #        st.write(f"🧠 {r['data']['title']}")
-            #        st.write(f"- Contradiction: {scores.get('contradiction', 0):.3f}")
-            #        st.write(f"- Entailment: {scores.get('entailment', 0):.3f}")
+            with st.expander("🧪 NLI Debug Output"):
+                st.write("Query:", rewritten)
+                for r in reranked:
+                    scores = r.get("nli_scores", {})
+                    st.write(f"🧠 {r['data']['title']}")
+                    st.write(f"- Contradiction: {scores.get('contradiction', 0):.3f}")
+                    st.write(f"- Entailment: {scores.get('entailment', 0):.3f}")
             
             ##########
     

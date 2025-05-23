@@ -1,6 +1,7 @@
 # utils/constraint_filter.py
 
 import re
+from utils.nli_filter import split_query
 
 def extract_constraints_from_query(query):
     query = query.lower()
@@ -93,4 +94,20 @@ def apply_constraint_filters(data, constraints):
         filtered = [d for d in filtered if d.get("num_bathrooms", 0) >= constraints["min_bathrooms"]]
     if "max_bathrooms" in constraints:
         filtered = [d for d in filtered if d.get("num_bathrooms", 0) <= constraints["max_bathrooms"]]
+    return filtered
+
+def filter_semantic_subqueries(rewritten, constraints):
+    subqueries = split_query(rewritten)
+
+    # Ensure subqueries is a list
+    if isinstance(subqueries, str):
+        subqueries = [subqueries]
+
+    keywords = ["price", "size", "square", "million", "$", "ft", "feet", "bedroom", "bathroom"]
+
+    filtered = []
+    for q in subqueries:
+        if not any(kw in q.lower() for kw in keywords):
+            print("✅ Keeping subquery:", q)  # Debug line
+            filtered.append(q.strip())
     return filtered

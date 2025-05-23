@@ -12,7 +12,7 @@ def split_query(query):
     parts = query.replace(" and ", ".").split(".")
     return [p.strip() for p in parts if p.strip()]
 
-def nli_contradiction_filter(query, results, model, contradiction_threshold=0.01, entailment_threshold=0.5):
+def nli_contradiction_filter(query, results, model, contradiction_threshold=0.01, entailment_threshold=0.65):
     from sentence_transformers.util import batch_to_device
 
     sub_queries = split_query(query)
