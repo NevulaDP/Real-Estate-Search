@@ -90,3 +90,31 @@ def generate_short_text(title, short_description, location, price, size, num_bed
         f"Features: {feature_string}."
     )
 
+def generate_semantic_text(title, short_description, location=None, detected_features=None):
+    parts = []
+
+    # Clean title
+    title = title.strip().rstrip(".")
+    parts.append(f"{title}.")
+
+    # Description
+    parts.append(short_description.strip())
+
+    # Location
+    if location:
+        parts.append(f"Situated in {location}.")
+
+    # Features
+    if detected_features:
+        highlights = []
+        for f in detected_features:
+            item = f.get("item", "").strip()
+            desc = f.get("description", "").strip()
+            if item and desc:
+                highlights.append(desc)
+        if highlights:
+            parts.append("Key features include: " + "; ".join(highlights) + ".")
+
+    semantic = " ".join(parts)
+    return semantic
+

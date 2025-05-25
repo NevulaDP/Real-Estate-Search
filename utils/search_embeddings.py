@@ -7,7 +7,7 @@ import streamlit as st
 
 @st.cache_resource
 def load_embedding_model():
-    return SentenceTransformer('all-MiniLM-L6-v2')
+    return SentenceTransformer("BAAI/bge-small-en-v1.5")
 
 @st.cache_resource
 def build_faiss_index(embeddings):
@@ -18,8 +18,11 @@ def build_faiss_index(embeddings):
     return index
 
 def encode_query(query, model):
-    embedding = model.encode(query).astype('float32')
-    return embedding / np.linalg.norm(embedding)
+    prefix = "Represent this real estate query for retrieving relevant property listings: "
+    full_query = prefix + query
+    embedding = model.encode(full_query).astype('float32')
+    return embedding
+
 
 def query_index(index, query_embedding, metadata, ids, k=5, score_threshold=0.45):
     if index.ntotal == 0:

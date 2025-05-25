@@ -73,6 +73,15 @@ def extract_constraints_from_query(query):
     match_max_baths = re.search(r'(?:maximum of|a maximum of|less than|under)\s*(\d+)\s*(?:bathroom|bathrooms)', query)
     if match_max_baths:
         constraints["max_bathrooms"] = int(match_max_baths.group(1))
+    
+    # --- Location ---
+    location_match = re.search(
+    r'\b(?:located\s+in|(?:property|apartment|house|penthouse|unit)\s+(?:must\s+be\s+)?in)\s+([a-zA-Z\s]+)',
+    query
+    )
+    if location_match:
+        location = location_match.group(1).strip().lower()
+        constraints["location"] = location
 
     return constraints
 
@@ -94,6 +103,9 @@ def apply_constraint_filters(data, constraints):
         filtered = [d for d in filtered if d.get("num_bathrooms", 0) >= constraints["min_bathrooms"]]
     if "max_bathrooms" in constraints:
         filtered = [d for d in filtered if d.get("num_bathrooms", 0) <= constraints["max_bathrooms"]]
+    if "location" in constraints:
+        loc = constraints["location"]
+        filtered = [d for d in filtered if d.get("location", "").lower() == loc]
     return filtered
 
 def filter_semantic_subqueries(rewritten, constraints):

@@ -23,6 +23,8 @@ def create_property_entry(
         'floor': floor,
         'detected_features': detected_features,
         'embedding': embedding.tolist(),
-        'combined_text': None
+        'combined_text': None,
+        'short_text': None,
+        'semantic_text': None
     }
 
