@@ -398,7 +398,7 @@ elif mode == "Search":
                 f"{rewritten}",
                 embedding_model
             )
-            initial_results = query_index(index, query_embedding, filtered_data, ids, k=6, score_threshold=0.0)
+            initial_results = query_index(index, query_embedding, filtered_data, ids, k=20, score_threshold=0.0)
     
             if not initial_results:
                 status.empty()
@@ -452,8 +452,9 @@ elif mode == "Search":
                 top_avg = sum(sorted(similarity_scores, reverse=True)[:top_k]) / top_k
 
                 # Dynamic threshold: 85% of the average of top-k
-                dynamic_threshold = top_avg * 0.93
-                dynamic_threshold = max(0.3, min(dynamic_threshold, 1))
+                dynamic_threshold = top_avg * 0.936
+                # dynamic_threshold = max(0.3, min(dynamic_threshold, 1)) - forgiving
+                dynamic_threshold = max(0.3, dynamic_threshold)
                 filtered_semantic = [r for r in reranked if r['semantic_similarity'] >= dynamic_threshold]
                 st.caption(f"📊 Dynamic threshold set to **{dynamic_threshold:.3f}** based on top-{top_k} average.")
 
@@ -476,7 +477,6 @@ elif mode == "Search":
             #nli_tokenizer, nli_model = load_nli_model()
             nli_model = load_nli_model()
             filtered_results = nli_contradiction_filter(rewritten, reranked_boosted, model=nli_model, contradiction_threshold=0.015)
-            print(len(filtered_results))
             #--- Dynamic Gap Treshold
             # for r in filtered_results:
                 # r["entailment_gap"] = r['nli_scores']['entailment'] - r['nli_scores']['contradiction']
