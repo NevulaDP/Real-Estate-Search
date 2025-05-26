@@ -55,7 +55,7 @@ def synonym_match(query_phrase: str, semantic_text: str) -> bool:
                     return True
     return False
 
-def compute_lexical_boost(query: str, semantic_text: str, boost_per_hit: float = 0.25, max_boost: float = 0.75) -> float:
+def compute_lexical_boost(query: str, semantic_text: str, boost_per_hit: float = 0.15, max_boost: float = 0.75) -> float:
     """
     Computes a boost score based on direct lexical overlap between query and semantic_text.
     Includes:
@@ -71,7 +71,7 @@ def compute_lexical_boost(query: str, semantic_text: str, boost_per_hit: float =
     for phrase in phrases:
         phrase_cleaned = re.sub(r"[^a-z0-9 ]", "", phrase)
         if phrase_cleaned in semantic_text:
-            hits += 1
+            hits += 1.5
         elif synonym_match(phrase_cleaned, semantic_text):
             hits += 1
         else:
@@ -80,6 +80,7 @@ def compute_lexical_boost(query: str, semantic_text: str, boost_per_hit: float =
             semantic_tokens = set(re.findall(r"\w+", semantic_text))
             if phrase_tokens & semantic_tokens:
                 hits += 0.5  # partial match boost
+            
 
     # Title bonus: if title (first sentence) contains important words
     title = semantic_text.split(".")[0]
