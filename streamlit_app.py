@@ -12,6 +12,7 @@ from utils.features import extract_features, generate_combined_text, generate_sh
 from utils.database import create_property_entry
 from utils.hf_uploader import upload_image_to_hub, upload_json_to_hub
 from utils.hf_loader import load_entries_from_hub
+from utils.evals_funcs import log_results_to_csv, attach_keyword_overlap_metrics, extract_keywords, enrich_with_scores
 #from utils.form_validation import validate_and_process_form
 
 # Configure Gemini
@@ -322,9 +323,9 @@ elif mode == "Search":
     from utils.query_rewrite import rewrite_query_with_constraints
     from utils.constraint_filter import extract_constraints_from_query, apply_constraint_filters, filter_semantic_subqueries
     from utils.search_embeddings import load_embedding_model, build_faiss_index, encode_query, query_index
-    from utils.nli_filter import nli_contradiction_filter, load_nli_model, filter_by_entailment_gap
+    from utils.inferring_filter import nli_contradiction_filter, load_nli_model, filter_by_entailment_gap, load_verification_model, flan_filter, score_flan_match_quality
     from utils.hf_loader import load_entries_from_hub
-    from sentence_transformers import CrossEncoder
+    #from sentence_transformers import CrossEncoder
     from sklearn.metrics.pairwise import cosine_similarity
     from utils.lexical_filter import compute_lexical_boost, extract_key_phrases, lexical_entailment_filter, apply_lexical_boost
 
@@ -387,6 +388,7 @@ elif mode == "Search":
                 st.stop()
     
             status.info("🔍 Searching...")
+            #----- FAISS Inedexing
             embedding_model = load_embedding_model()
             embeddings = np.array([d['embedding'] for d in filtered_data]).astype('float32')
             #########
@@ -398,24 +400,24 @@ elif mode == "Search":
                 f"{rewritten}",
                 embedding_model
             )
-            initial_results = query_index(index, query_embedding, filtered_data, ids, k=20, score_threshold=0.0)
-    
+            #----- Grabbing all indexed
+            initial_results = query_index(index, query_embedding, filtered_data, ids, k=len(filtered_data), score_threshold=0.0)
+ 
             if not initial_results:
                 status.empty()
                 st.warning("No results found after embedding search.")
                 st.stop()
     
-            status.info("📊 Reranking results...")
-            cross_model = CrossEncoder("cross-encoder/nli-deberta-v3-large")
-            pairs = [(f"Required features: {rewritten}", r['data'].get('semantic_text', r['data']['short_text'])) for r in initial_results]
-
-            cross_scores = cross_model.predict(pairs)
-    
-    
-            for i, r in enumerate(initial_results):
-                r['rerank_score'] = float(cross_scores[i][2])
-    
-            reranked = sorted(initial_results, key=lambda x: x['rerank_score'], reverse=True)
+            #status.info("📊 Reranking results...")
+            #-----Rereanking
+            # cross_model = CrossEncoder("cross-encoder/nli-deberta-v3-large")
+            # pairs = [(f"Required features: {rewritten}", r['data'].get('semantic_text', r['data']['short_text'])) for r in initial_results]
+            # cross_scores = cross_model.predict(pairs)
+            # for i, r in enumerate(initial_results):
+                # r['rerank_score'] = float(cross_scores[i][2])
+            # reranked = sorted(initial_results, key=lambda x: x['rerank_score'], reverse=True)
+            # for r in reranked:
+                 # print(f"{r['data']['title']},{r['rerank_score']}")
             
             
             sub_queries_to_check = []
@@ -423,51 +425,74 @@ elif mode == "Search":
             if not constraints_found:
                 # No constraints? Use full rewritten query
                 sub_queries_to_check = [rewritten]
+
             else:
                 # Use only the non-quantified subqueries
                 sub_queries_to_check = filter_semantic_subqueries(rewritten, constraints)
-            reranked_boosted = reranked
+            candidates = initial_results
+ 
             if sub_queries_to_check:
                 status.info("🔎 Running semantic similarity filter...")
-
+            
                 semantic_focus = ". ".join(sub_queries_to_check)
+                
+                
+                
                 query_vector = embedding_model.encode(semantic_focus).reshape(1, -1)
-                embedding_matrix = np.array([r['data']['embedding'] for r in reranked_boosted])
+                embedding_matrix = np.array([r['data']['embedding'] for r in candidates])
                 similarity_scores = cosine_similarity(query_vector, embedding_matrix)[0]
 
                 del query_vector, embedding_matrix
                 gc.collect()
 
-                for i, r in enumerate(reranked_boosted):
+                for i, r in enumerate(candidates):
                     r['semantic_similarity'] = float(similarity_scores[i])
-                    
-                reranked = apply_lexical_boost(semantic_focus,reranked,boost_per_hit=0.15);
-
-                #similarity_threshold = 0.91
+                #--- Combined Semantic score   
+                query_keywords = extract_keywords(rewritten)
+                candidates = enrich_with_scores(initial_results, query_keywords)
+                candidates = sorted(candidates, key=lambda r: r['combined_score'], reverse=True)[:15] # taking only top 15 scoring in combined_score parameter
+                for r in candidates:
+                    r['passed_semantic'] = True
                 
+                #candidates = apply_lexical_boost(semantic_focus,candidates,boost_per_hit=0.25);
+                
+
+                #---------Old Metohd - Dynamic Treshold & Symantic Filtering
                 #--- Dynamic Symantic Treshold
                 # After computing semantic_similarity
-                similarity_scores = [r['semantic_similarity'] for r in reranked]
-                top_k = min(3, len(similarity_scores))  # Look at the top 3 scores
-                top_avg = sum(sorted(similarity_scores, reverse=True)[:top_k]) / top_k
+                #similarity_scores = [r['semantic_similarity'] for r in candidates]
+                #top_k = min(3, len(similarity_scores))  # Look at the top 3 scores
+                #top_avg = sum(sorted(similarity_scores, reverse=True)[:top_k]) / top_k
 
-                # Dynamic threshold: 85% of the average of top-k
-                dynamic_threshold = top_avg * 0.936
+                # Dynamic threshold: 93.5% of the average of top-k
+                #dynamic_threshold = top_avg * 0.935
                 # dynamic_threshold = max(0.3, min(dynamic_threshold, 1)) - forgiving
-                dynamic_threshold = max(0.3, dynamic_threshold)
-                filtered_semantic = [r for r in reranked if r['semantic_similarity'] >= dynamic_threshold]
-                st.caption(f"📊 Dynamic threshold set to **{dynamic_threshold:.3f}** based on top-{top_k} average.")
+                #dynamic_threshold = max(0.3, dynamic_threshold)
+                #filtered_semantic = [r for r in candidates if r['semantic_similarity'] >= dynamic_threshold]
+                
+                #st.caption(f"📊 Dynamic threshold set to **{dynamic_threshold:.3f}** based on top-{top_k} average.")
 
-                if not filtered_semantic:
-                    st.warning("✨ We didn’t find a perfect match, but here are the most relevant properties we found.")
-                    reranked_boosted=reranked
+                # if not filtered_semantic:
+                    # st.warning("✨ We didn’t find a perfect match, but here are the most relevant properties we found.")
+                    # reranked_boosted=reranked
 
-                if filtered_semantic:
-                    reranked_boosted = sorted(filtered_semantic, key=lambda r: r['semantic_similarity'], reverse=True)
+                # if filtered_semantic:
+                    # reranked_boosted = sorted(filtered_semantic, key=lambda r: r['semantic_similarity'], reverse=True)
+                    
+                # Always pass top N to Flan regardless of semantic threshold
+                
+                #--------- Old Method Ends Here
+                
+                ###-------- Eval Log Flag 1 - After Semantic Search ---------###
+                for i, r in enumerate(candidates):
+                    sim_score = float(similarity_scores[i])
+                    r['semantic_similarity'] = sim_score
 
-                with st.expander("🧠 Semantic Similarity Debug"):
-                    for r in reranked_boosted:
-                        st.write(f"🏡 {r['data']['title']} → Similarity: {r['semantic_similarity']:.3f}")
+                ###-------------------------------------------------------###
+                #--- Semantic Score Web Interface Debug
+                #with st.expander("🧠 Semantic Similarity Debug"):
+                #   for r in candidates:
+                #       st.write(f"🏡 {r['data']['title']} → Similarity: {r['semantic_similarity']:.3f}")
     
                 
 
@@ -475,8 +500,8 @@ elif mode == "Search":
     
             status.info("🧠 Filtering contradictions...")
             #nli_tokenizer, nli_model = load_nli_model()
-            nli_model = load_nli_model()
-            filtered_results = nli_contradiction_filter(rewritten, reranked_boosted, model=nli_model, contradiction_threshold=0.015)
+            ####nli_model = load_nli_model()
+            ####filtered_results = nli_contradiction_filter(rewritten, reranked_boosted, model=nli_model, contradiction_threshold=0.015)
             #--- Dynamic Gap Treshold
             # for r in filtered_results:
                 # r["entailment_gap"] = r['nli_scores']['entailment'] - r['nli_scores']['contradiction']
@@ -492,19 +517,35 @@ elif mode == "Search":
                 # r for r in filtered_results
                 # if r['nli_scores']['entailment'] - r['nli_scores']['contradiction'] > dynamic_gap
             # ]
-            filtered_results = filter_by_entailment_gap(filtered_results, top_n=3, margin=0.02, min_threshold=0.90)
-            for r in filtered_results:
-                st.write(f" {r['data']['title']} :{r['entailment_gap']}")
-            filtered_results = sorted(filtered_results, key=lambda x: x['rerank_score'], reverse=True)
-            ##########
+            ####filtered_results = filter_by_entailment_gap(filtered_results, top_n=3, margin=0.02, min_threshold=0.90)
+            #attach_keyword_overlap_metrics(candidates, rewritten)
+            flan_model = load_verification_model()
+            filtered_results = flan_filter(rewritten, candidates, model=flan_model)
             
-            with st.expander("🧪 NLI Debug Output"):
-                st.write("Query:", rewritten)
-                for r in filtered_results:
-                    scores = r.get("nli_scores", {})
-                    st.write(f"🧠 {r['data']['title']}")
-                    st.write(f"- Contradiction: {scores.get('contradiction', 0):.3f}")
-                    st.write(f"- Entailment: {scores.get('entailment', 0):.3f}")
+            # Further analysis on Flan - to explain why entry passed or not and give a hueristic score
+            for result in candidates:
+                response = result.get('flan_response', '')
+                features = result['data'].get('detected_features', [])
+                result['match_quality_score'] = score_flan_match_quality(response, rewritten, features)
+            
+           #--- logging combined score for each entry that got through FAISS
+            for r in candidates:
+                r['combined_score'] = 0.6 * r['semantic_similarity'] + 0.4 * r.get('lexical_match_ratio', 0)
+            filtered_results = sorted(filtered_results, key=lambda x: x['combined_score'], reverse=True)
+            ##########
+            ###-------- Eval Log Flag 3 - After Flan ---------###
+            for r in candidates:
+                r['included'] = r in filtered_results  # Final flag
+            log_results_to_csv(rewritten, initial_results)
+            ###-------------------------------------------------------###
+            ###---- Old NLI Web Interface Debug
+            #with st.expander("🧪 NLI Debug Output"):
+            #   st.write("Query:", rewritten)
+            #   for r in filtered_results:
+            #       scores = r.get("nli_scores", {})
+            #       st.write(f"🧠 {r['data']['title']}")
+            #       st.write(f"- Contradiction: {scores.get('contradiction', 0):.3f}")
+            #       st.write(f"- Entailment: {scores.get('entailment', 0):.3f}")
             
             ##########
     
@@ -548,10 +589,8 @@ elif mode == "Search":
            
             
             # Force garbage collection
-            del embeddings, index, query_embedding, initial_results, reranked             
-            del cross_model
-            del pairs, cross_scores
-            del nli_model
+            del embeddings, index, query_embedding, initial_results, candidates             
+            del flan_model
             gc.collect()
             
             # Clear GPU cache if you're using a model on CUDA

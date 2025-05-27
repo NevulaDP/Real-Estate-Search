@@ -13,21 +13,33 @@ def rewrite_query_with_constraints(user_query):
     try:
         client = get_gemini_client()
         prompt = f"""
-        Rewrite the following real estate search query to make all preferences and constraints explicit.
+            You are rewriting a real estate search query to make all preferences and constraints explicit, factual, and broken into individual sentences.
 
-        Rules:
-        - Do not add any explanation or extra text
-        - Just return the rewritten query
-        - Use natural language
-        - Use strong constraint phrases like "must include", "must not have", "is required", or "cannot include"
-        - **If the query involves proximity or vague preferences (e.g., "near a school", "good view", "quiet area"), translate them into specific, likely features. For example, "near a school" → "must include a nearby school"**
-        - Write each constraint as a separate sentence
-        - Do not repeat the same idea
-        - Avoid technical language like "floor number below the highest"
-        - If the user query contains idioms or figurative language (e.g., "control the weather"), interpret it in a practical way (e.g., air conditioning, climate control).
+            🧠 Instructions:
+            - DO NOT explain or justify anything.
+            - DO NOT add extra ideas not in the query.
+            - DO NOT repeat the same concept in different words.
 
-        Query: "{user_query}"
-        """
+            ✅ DO:
+            - Use natural language, one **statement per sentence**.
+            - Use **strong constraint language** like:  
+              • "must include", "is required", "must not include", "is prohibited"  
+              → only for clear, quantifiable constraints (e.g., bedrooms, price, balcony, floor, etc.)
+
+            - Use **softer language** like:  
+              • "should preferably", "ideally", "would be nice if",  
+              → for lifestyle preferences or vague qualities (e.g., quiet, family-friendly, modern feel)
+
+            - Split any combined ideas (e.g., "near school and train") into **separate sentences**.
+
+            - Convert vague proximity ideas into concrete terms when possible:
+                • "near public transport" → "must include a nearby bus stop" AND "must include a nearby train station"
+                • "quiet area" → "should preferably be in a quiet residential neighborhood"
+
+            - For non-numeric preferences (e.g., “good for families”, “modern look”), **do not force them into hard constraints** — rewrite them clearly but softly so downstream filtering doesn't mistake them for structured rules.
+
+            📥 Input Query: "{user_query}"
+            """
 
         response = client.GenerativeModel("gemini-2.0-flash").generate_content(
             contents=[prompt],

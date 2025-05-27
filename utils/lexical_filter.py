@@ -15,7 +15,6 @@ def lexical_entailment_filter(query, results, threshold=60):
         text = r['data'].get("semantic_text") or r['data'].get("short_text", "")
         score = fuzz.partial_ratio(query.lower(), text.lower())
 
-        r["lexical_score"] = score
         if score >= threshold:
             filtered.append(r)
 

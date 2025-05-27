@@ -1,7 +1,7 @@
 # utils/constraint_filter.py
 
 import re
-from utils.nli_filter import split_query
+from utils.inferring_filter import split_query
 
 def extract_constraints_from_query(query):
     query = query.lower()
