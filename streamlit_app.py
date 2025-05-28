@@ -433,6 +433,7 @@ elif mode == "Search":
  
             if sub_queries_to_check:
                 status.info("🔎 Running semantic similarity filter...")
+                skip_flan = False
             
                 semantic_focus = ". ".join(sub_queries_to_check)
                 
@@ -497,45 +498,58 @@ elif mode == "Search":
                 
 
             #########
-    
-            status.info("🧠 Filtering contradictions...")
-            #nli_tokenizer, nli_model = load_nli_model()
-            ####nli_model = load_nli_model()
-            ####filtered_results = nli_contradiction_filter(rewritten, reranked_boosted, model=nli_model, contradiction_threshold=0.015)
-            #--- Dynamic Gap Treshold
-            # for r in filtered_results:
-                # r["entailment_gap"] = r['nli_scores']['entailment'] - r['nli_scores']['contradiction']
+            all_candidates = candidates
+            if not sub_queries_to_check:
+                skip_flan = True
+            # skips flan if query is puerly made of metadata constraints
+            if not skip_flan:
+                status.info("🧠 Filtering contradictions...")
+                #nli_tokenizer, nli_model = load_nli_model()
+                ####nli_model = load_nli_model()
+                ####filtered_results = nli_contradiction_filter(rewritten, reranked_boosted, model=nli_model, contradiction_threshold=0.015)
+                #--- Dynamic Gap Treshold
+                # for r in filtered_results:
+                    # r["entailment_gap"] = r['nli_scores']['entailment'] - r['nli_scores']['contradiction']
 
-            # # Sort by gap
-            # sorted_by_gap = sorted(filtered_results, key=lambda r: r["entailment_gap"], reverse=True)
+                # # Sort by gap
+                # sorted_by_gap = sorted(filtered_results, key=lambda r: r["entailment_gap"], reverse=True)
 
-            # # Use top 3 as reference
-            # top_n = 4
-            # top_gaps = [r["entailment_gap"] for r in sorted_by_gap[:top_n]]
-            # dynamic_gap = max(min(top_gaps), 0.9)  # prevent it from being too low
-            # filtered_results = [
-                # r for r in filtered_results
-                # if r['nli_scores']['entailment'] - r['nli_scores']['contradiction'] > dynamic_gap
-            # ]
-            ####filtered_results = filter_by_entailment_gap(filtered_results, top_n=3, margin=0.02, min_threshold=0.90)
-            #attach_keyword_overlap_metrics(candidates, rewritten)
-            flan_model = load_verification_model()
-            filtered_results = flan_filter(rewritten, candidates, model=flan_model)
-            
-            # Further analysis on Flan - to explain why entry passed or not and give a hueristic score
-            for result in candidates:
-                response = result.get('flan_response', '')
-                features = result['data'].get('detected_features', [])
-                result['match_quality_score'] = score_flan_match_quality(response, rewritten, features)
+                # # Use top 3 as reference
+                # top_n = 4
+                # top_gaps = [r["entailment_gap"] for r in sorted_by_gap[:top_n]]
+                # dynamic_gap = max(min(top_gaps), 0.9)  # prevent it from being too low
+                # filtered_results = [
+                    # r for r in filtered_results
+                    # if r['nli_scores']['entailment'] - r['nli_scores']['contradiction'] > dynamic_gap
+                # ]
+                ####filtered_results = filter_by_entailment_gap(filtered_results, top_n=3, margin=0.02, min_threshold=0.90)
+                #attach_keyword_overlap_metrics(candidates, rewritten)
+                flan_model = load_verification_model()
+                candidates = flan_filter(rewritten, candidates, model=flan_model)
+                
+                # Further analysis on Flan - to explain why entry passed or not and give a hueristic score
+                for result in all_candidates:
+                    response = result.get('flan_response', '')
+                    features = result['data'].get('detected_features', [])
+                    result['match_quality_score'] = score_flan_match_quality(response, rewritten, features)
+                del flan_model
             
            #--- logging combined score for each entry that got through FAISS
-            for r in candidates:
+            for r in all_candidates:
+                if 'semantic_similarity' not in r:
+                    # Pure constraint-filtered query — semantic doesn't apply
+                    r['semantic_similarity'] = 0.0 
+
+                if 'lexical_match_ratio' not in r:
+                    r['lexical_match_ratio'] = 0.0
                 r['combined_score'] = 0.6 * r['semantic_similarity'] + 0.4 * r.get('lexical_match_ratio', 0)
-            filtered_results = sorted(filtered_results, key=lambda x: x['combined_score'], reverse=True)
-            ##########
+           
+            candidates = sorted(candidates, key=lambda x: x['combined_score'], reverse=True)
+           
+           ##########
             ###-------- Eval Log Flag 3 - After Flan ---------###
-            for r in candidates:
-                r['included'] = r in filtered_results  # Final flag
+            for r in all_candidates:
+                r['included'] = r in all_candidates  # Final flag
             log_results_to_csv(rewritten, initial_results)
             ###-------------------------------------------------------###
             ###---- Old NLI Web Interface Debug
@@ -551,12 +565,12 @@ elif mode == "Search":
     
             status.empty()  # Clear the loading messages
     
-            if not filtered_results:
+            if not candidates:
                 st.warning("No results remain after contradiction filtering.")
                 st.stop()
             
            
-            for i, entry in enumerate(filtered_results, start=1):
+            for i, entry in enumerate(candidates, start=1):
                 prop = entry['data']  # ← this line is essential
     
                 with st.container(border=True):
@@ -589,8 +603,7 @@ elif mode == "Search":
            
             
             # Force garbage collection
-            del embeddings, index, query_embedding, initial_results, candidates             
-            del flan_model
+            del embeddings, index, query_embedding, initial_results, candidates, all_candidates 
             gc.collect()
             
             # Clear GPU cache if you're using a model on CUDA

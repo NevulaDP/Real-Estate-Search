@@ -108,18 +108,49 @@ def apply_constraint_filters(data, constraints):
         filtered = [d for d in filtered if d.get("location", "").lower() == loc]
     return filtered
 
-def filter_semantic_subqueries(rewritten, constraints):
+# def filter_semantic_subqueries(rewritten, constraints):
+    # subqueries = split_query(rewritten)
+
+    # # Ensure subqueries is a list
+    # if isinstance(subqueries, str):
+        # subqueries = [subqueries]
+
+    # keywords = ["price", "size", "square", "million", "$", "ft", "feet", "bedroom", "bathroom", "located]
+
+    # filtered = []
+    # for q in subqueries:
+        # if not any(kw in q.lower() for kw in keywords):
+            # print("✅ Keeping subquery:", q)  # Debug line
+            # filtered.append(q.strip())
+    # return filtered
+    
+def filter_semantic_subqueries(rewritten: str, constraints: dict) -> list:
     subqueries = split_query(rewritten)
 
-    # Ensure subqueries is a list
-    if isinstance(subqueries, str):
-        subqueries = [subqueries]
+    # Keep only the subqueries that are not purely structured constraints
+    filtered = [q.strip() for q in subqueries if not is_structured_constraint(q)]
 
-    keywords = ["price", "size", "square", "million", "$", "ft", "feet", "bedroom", "bathroom"]
-
-    filtered = []
-    for q in subqueries:
-        if not any(kw in q.lower() for kw in keywords):
-            print("✅ Keeping subquery:", q)  # Debug line
-            filtered.append(q.strip())
     return filtered
+
+
+
+def is_structured_constraint(phrase: str) -> bool:
+    phrase = phrase.lower()
+
+    # Adjust these patterns based on what your extract_constraints handles
+    price_pattern = r"(price|cost|under|less than|below|million|₪|\d+\s*(m|million|₪))"
+    size_pattern = r"(size|square meters|sqm|larger than|smaller than|more than|less than|\d+\s*(sqm|m²))"
+    bedroom_pattern = r"(bedroom|room|sleeping area)"
+    bathroom_pattern = r"(bathroom|toilet|restroom)"
+    location_pattern = r"(in|located in|neighborhood|area)\s+\b(tel aviv|jerusalem|netanya|beersheba|haifa)\b"
+
+    patterns = [
+        price_pattern,
+        size_pattern,
+        bedroom_pattern,
+        bathroom_pattern,
+        location_pattern,
+    ]
+
+    return any(re.search(p, phrase) for p in patterns)
+

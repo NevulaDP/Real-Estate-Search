@@ -4,7 +4,19 @@ import torch
 import torch.nn.functional as F
 from sentence_transformers import CrossEncoder
 from typing import List
-from transformers import AutoTokenizer, AutoModelForSeq2SeqLM
+from transformers import AutoTokenizer, AutoModelForSeq2SeqLM, BitsAndBytesConfig
+
+SYNONYM_MAP = {
+    "tv": "television",
+    "tele": "television",
+    "flat screen": "television",
+    "fridge": "refrigerator",
+    "oven": "stove",
+    "wardrobe": "closet",
+    "sofa": "couch",
+    "lavatory": "bathroom",
+    "wc": "bathroom",
+}
 
 
 def load_nli_model():
@@ -147,29 +159,42 @@ def flan_filter(query: str, results: list, model) -> list:
 def score_flan_match_quality(response_text: str, constraint: str, detected_features: list) -> float:
     """
     Scores the Flan verification response:
-    - 1.0 = clear 'Yes' and reason with constraint + matching feature
-    - 0.75 = 'Yes' and includes constraint or feature
-    - 0.5 = 'Yes' but vague or lacks reason
-    - 0.25 = 'No' but gives a reasonable explanation
-    - 0.0 = unclear, off-topic, or contradictory
+    - 1.0 = clear 'True' with constraint + feature
+    - 0.75 = 'True' and includes constraint or feature
+    - 0.5 = 'True' but vague or generic
+    - 0.25 = 'False' but has some relevant justification
+    - 0.0 = irrelevant, unclear, or wrong
     """
-    response = response_text.strip().lower()
-    constraint = constraint.lower()
+    response = normalize_text(response_text.strip())
+    constraint = normalize_text(constraint)
 
-    has_yes = response.startswith("true")
-    has_no = response.startswith("false")
+    has_true = response.startswith("true")
+    has_false = response.startswith("false")
+
     mentions_constraint = constraint in response
-    mentions_feature = any(
-        (feature.get("item", "").lower() in response or feature.get("description", "").lower() in response)
-        for feature in detected_features)
 
-    if has_yes and mentions_constraint and mentions_feature:
+    mentions_feature = any(
+        normalize_text(feature.get("item", "")) in response or
+        normalize_text(feature.get("description", "")) in response
+        for feature in detected_features
+    )
+
+    if has_true and mentions_constraint and mentions_feature:
         return 1.0
-    elif has_yes and (mentions_constraint or mentions_feature):
+    elif has_true and (mentions_constraint or mentions_feature):
         return 0.75
-    elif has_yes:
+    elif has_true:
         return 0.5
-    elif has_no and (mentions_constraint or mentions_feature):
+    elif has_false and (mentions_constraint or mentions_feature):
         return 0.25
     else:
         return 0.0
+
+
+
+
+def normalize_text(text: str) -> str:
+    text = text.lower()
+    for synonym, canonical in SYNONYM_MAP.items():
+        text = text.replace(synonym, canonical)
+    return text

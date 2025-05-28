@@ -9,4 +9,5 @@ google-generativeai
 Pillow
 psutil
 rapidfuzz
+accelerate
 
