@@ -22,11 +22,11 @@ def log_results_to_csv(query, entries, filename="search_logs.csv"):
                 "faiss_rank": r['data']['faiss_rank'],
                 "faiss_score": r['data']['faiss_score'],
                 "title": r['data']['title'],
-                "query_keywords": ", ".join(r.get("query_keywords", [])),
-                "matched_keywords": ", ".join(r.get("matched_keywords", [])),
-                "lexical_match_ratio": r.get("lexical_match_ratio", None),
+                #"query_keywords": ", ".join(r.get("query_keywords", [])),
+                #"matched_keywords": ", ".join(r.get("matched_keywords", [])),
+                #"lexical_match_ratio": r.get("lexical_match_ratio", None),
                 "semantic_similarity": round(r.get("semantic_similarity", None),3),
-                "combined_score": round(r.get("combined_score",None),3),
+                #"combined_score": round(r.get("combined_score",None),3),
                 "passed_semantic": r.get("passed_semantic", None),
                 "flan_response": r.get("flan_response",None),
                 "flan_match_score": r.get("flan_match_score"),
@@ -111,15 +111,56 @@ def attach_keyword_overlap_metrics(results, semantic_focus):
     
 def enrich_with_scores(results, query_keywords=None):
     for r in results:
-        # Use already extracted keywords
         q_keywords = r.get("query_keywords", query_keywords or [])
         m_keywords = r.get("matched_keywords", [])
 
-        match_ratio = len(m_keywords) / len(q_keywords) if q_keywords else 0
+        adjusted_q_len = max(len(q_keywords), 5)
+        raw_match_ratio = len(m_keywords) / adjusted_q_len
+        match_ratio = max(raw_match_ratio, 0.15)
 
-        r['lexical_match_ratio'] = match_ratio
-        r['semantic_similarity'] = r.get('semantic_similarity', 0)
-        r['combined_score'] = 0.6 * r['semantic_similarity'] + 0.4 * match_ratio
+        r["lexical_match_ratio"] = round(raw_match_ratio, 5)
+        sem = r.get("semantic_similarity", 0)
+        combined_score = 1 * sem + 0 * match_ratio
+        r["combined_score"] = round(combined_score, 5)
 
     return results
+    
+def log_semantic_false_negatives(query, entries, folder="logs/semantic_false_negatives"):
+    """
+    Logs listings rejected by semantic filtering but verified by FLAN.
+
+    Args:
+        query (str): The user query.
+        entries (list): Listings where 'passed_semantic' is False but 'flan_verified' is True.
+        folder (str): Folder to save the log CSV in.
+    """
+    os.makedirs(folder, exist_ok=True)
+    timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+    filename = os.path.join(folder, f"semantic_misses_{timestamp}.csv")
+
+    fieldnames = [
+        "timestamp", "query", "id", "semantic_score", "flan_response", 
+        "flan_verified", "title", "short_text", "features", "description"
+    ]
+
+    with open(filename, mode="w", newline='', encoding="utf-8") as f:
+        writer = csv.DictWriter(f, fieldnames=fieldnames)
+        writer.writeheader()
+
+        for r in entries:
+            d = r.get("data", {})
+            writer.writerow({
+                "timestamp": datetime.now().isoformat(),
+                "query": query,
+                "id": d.get("id", ""),
+                "semantic_score": round(r.get("semantic_similarity", 0), 3),
+                "flan_response": r.get("flan_response", ""),
+                "flan_verified": r.get("flan_verified", False),
+                "title": d.get("title", ""),
+                "short_text": d.get("short_text", "").replace("\n", " "),
+                "features": " | ".join(d.get("features", [])),
+                "description": d.get("description", "").replace("\n", " "),
+            })
+
+    return filename
 

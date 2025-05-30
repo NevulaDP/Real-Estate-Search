@@ -21,9 +21,6 @@ SYNONYM_MAP = {
 }
 
 
-def load_nli_model():
-    return CrossEncoder("cross-encoder/nli-deberta-v3-large")
-
 
 
 def split_query(query):
@@ -35,10 +32,14 @@ def split_query(query):
 
 # Load FLAN-T5-XL model
 
-def load_verification_model():
+def load_verification_model(force_cpu=False):
     tokenizer = AutoTokenizer.from_pretrained("google/flan-t5-xl")
     model = AutoModelForSeq2SeqLM.from_pretrained("google/flan-t5-xl")
-    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+    if torch.cuda.is_available() and not force_cpu:
+        device = torch.device("cuda")
+    else:
+        device = torch.device("cpu")
+    
     model = model.to(device)
     return {"tokenizer": tokenizer, "model": model, "device": device}
 
@@ -90,4 +91,6 @@ def flan_filter(query: str, results: list, model) -> list:
             filtered.append(r)
 
     return filtered
+
+
 
