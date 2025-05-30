@@ -323,7 +323,7 @@ elif mode == "Search":
     from utils.query_rewrite import rewrite_query_with_constraints
     from utils.constraint_filter import extract_constraints_from_query, apply_constraint_filters, filter_semantic_subqueries
     from utils.search_embeddings import load_embedding_model, build_faiss_index, encode_query, query_index
-    from utils.inferring_filter import nli_contradiction_filter, load_nli_model, filter_by_entailment_gap, load_verification_model, flan_filter, score_flan_match_quality
+    from utils.inferring_filter import  load_nli_model, load_verification_model, flan_filter
     from utils.hf_loader import load_entries_from_hub
     #from sentence_transformers import CrossEncoder
     from sklearn.metrics.pairwise import cosine_similarity
@@ -380,6 +380,7 @@ elif mode == "Search":
             if not any(constraints.values()):
                 filtered_data = data
             else:
+                status.info("📦 Applying hard constraints...")
                 filtered_data = apply_constraint_filters(data, constraints)
     
             if not filtered_data:
@@ -387,7 +388,7 @@ elif mode == "Search":
                 st.warning("No properties match your query. Try simplifying it.")
                 st.stop()
     
-            status.info("🔍 Searching...")
+            status.info("🔍 Indexing...")
             #----- FAISS Inedexing
             embedding_model = load_embedding_model()
             embeddings = np.array([d['embedding'] for d in filtered_data]).astype('float32')
@@ -401,24 +402,18 @@ elif mode == "Search":
                 embedding_model
             )
             #----- Grabbing all indexed
-            initial_results = query_index(index, query_embedding, filtered_data, ids, k=len(filtered_data), score_threshold=0.0)
+            initial_results, rejected_results = query_index(index, query_embedding, filtered_data, ids, k=len(filtered_data), score_threshold=0.45)
+            #--Log FAISS Scores
+            for i, r in enumerate(initial_results):
+                r['data']['faiss_score'] = round(r['score'], 3)
+                r['data']['faiss_rank'] = i + 1
+                
  
             if not initial_results:
                 status.empty()
                 st.warning("No results found after embedding search.")
                 st.stop()
     
-            #status.info("📊 Reranking results...")
-            #-----Rereanking
-            # cross_model = CrossEncoder("cross-encoder/nli-deberta-v3-large")
-            # pairs = [(f"Required features: {rewritten}", r['data'].get('semantic_text', r['data']['short_text'])) for r in initial_results]
-            # cross_scores = cross_model.predict(pairs)
-            # for i, r in enumerate(initial_results):
-                # r['rerank_score'] = float(cross_scores[i][2])
-            # reranked = sorted(initial_results, key=lambda x: x['rerank_score'], reverse=True)
-            # for r in reranked:
-                 # print(f"{r['data']['title']},{r['rerank_score']}")
-            
             
             sub_queries_to_check = []
 
@@ -432,7 +427,7 @@ elif mode == "Search":
             candidates = initial_results
  
             if sub_queries_to_check:
-                status.info("🔎 Running semantic similarity filter...")
+                status.info("🔎 Finding your best match")
                 skip_flan = False
             
                 semantic_focus = ". ".join(sub_queries_to_check)
@@ -449,7 +444,8 @@ elif mode == "Search":
                 for i, r in enumerate(candidates):
                     r['semantic_similarity'] = float(similarity_scores[i])
                 #--- Combined Semantic score   
-                query_keywords = extract_keywords(rewritten)
+                attach_keyword_overlap_metrics(candidates,semantic_focus)
+                query_keywords = extract_keywords(semantic_focus)
                 candidates = enrich_with_scores(initial_results, query_keywords)
                 candidates = sorted(candidates, key=lambda r: r['combined_score'], reverse=True)[:15] # taking only top 15 scoring in combined_score parameter
                 for r in candidates:
@@ -503,35 +499,33 @@ elif mode == "Search":
                 skip_flan = True
             # skips flan if query is puerly made of metadata constraints
             if not skip_flan:
-                status.info("🧠 Filtering contradictions...")
-                #nli_tokenizer, nli_model = load_nli_model()
-                ####nli_model = load_nli_model()
-                ####filtered_results = nli_contradiction_filter(rewritten, reranked_boosted, model=nli_model, contradiction_threshold=0.015)
-                #--- Dynamic Gap Treshold
-                # for r in filtered_results:
-                    # r["entailment_gap"] = r['nli_scores']['entailment'] - r['nli_scores']['contradiction']
+                status.info("🧠 Veryifing results")
+         
+         
+                if semantic_focus:
+                    flan_model = load_verification_model()
+                    candidates = flan_filter(semantic_focus, candidates, model=flan_model)
+                if not rejected_results:
+                    print ("empty!")
+                    
+             # Check if any rejected listings were actually valid according to FLAN
+            recovered_from_rejected = []
+            if rejected_results:
+                for entry in rejected_results:
+                    full_text = " ".join([
+                        entry['data'].get('short_text', ''),
+                        entry['data'].get('description', ''),
+                        " ".join(entry['data'].get('features', []))
+                    ])
+                    flan_response = verify_claim_flan(flan_model, rewritten, full_text)
+                    entry['flan_response'] = flan_response
+                    entry['flan_verified'] = flan_response.startswith("true")
+                    entry['flan_match_score'] = 1.0 if entry['flan_verified'] else 0.0
 
-                # # Sort by gap
-                # sorted_by_gap = sorted(filtered_results, key=lambda r: r["entailment_gap"], reverse=True)
-
-                # # Use top 3 as reference
-                # top_n = 4
-                # top_gaps = [r["entailment_gap"] for r in sorted_by_gap[:top_n]]
-                # dynamic_gap = max(min(top_gaps), 0.9)  # prevent it from being too low
-                # filtered_results = [
-                    # r for r in filtered_results
-                    # if r['nli_scores']['entailment'] - r['nli_scores']['contradiction'] > dynamic_gap
-                # ]
-                ####filtered_results = filter_by_entailment_gap(filtered_results, top_n=3, margin=0.02, min_threshold=0.90)
-                #attach_keyword_overlap_metrics(candidates, rewritten)
-                flan_model = load_verification_model()
-                candidates = flan_filter(rewritten, candidates, model=flan_model)
-                
-                # Further analysis on Flan - to explain why entry passed or not and give a hueristic score
-                for result in all_candidates:
-                    response = result.get('flan_response', '')
-                    features = result['data'].get('detected_features', [])
-                    result['match_quality_score'] = score_flan_match_quality(response, rewritten, features)
+                    if entry['flan_verified']:
+                        recovered_from_rejected.append(entry)   
+                    
+              
                 del flan_model
             
            #--- logging combined score for each entry that got through FAISS
@@ -549,9 +543,16 @@ elif mode == "Search":
            ##########
             ###-------- Eval Log Flag 3 - After Flan ---------###
             for r in all_candidates:
-                r['included'] = r in all_candidates  # Final flag
+                r['included'] = r in candidates  # Final flag
             log_results_to_csv(rewritten, initial_results)
-            ###-------------------------------------------------------###
+            ###----------------Eval Log Flag 4 Rejected by FAISS passed by FLAN-------------------------###
+            if recovered_from_rejected:
+                from utils.evals_funcs import log_faiss_false_negatives
+                log_faiss_false_negatives(recovered_from_rejected)
+            
+            
+            
+            
             ###---- Old NLI Web Interface Debug
             #with st.expander("🧪 NLI Debug Output"):
             #   st.write("Query:", rewritten)
@@ -603,7 +604,7 @@ elif mode == "Search":
            
             
             # Force garbage collection
-            del embeddings, index, query_embedding, initial_results, candidates, all_candidates 
+            del embeddings, index, query_embedding, initial_results, candidates, all_candidates, rejected_results, recovered_from_rejected
             gc.collect()
             
             # Clear GPU cache if you're using a model on CUDA

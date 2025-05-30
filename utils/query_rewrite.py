@@ -32,9 +32,9 @@ def rewrite_query_with_constraints(user_query):
 
             - Split any combined ideas (e.g., "near school and train") into **separate sentences**.
 
-            - Convert vague proximity ideas into concrete terms when possible:
-                • "near public transport" → "must include a nearby bus stop" AND "must include a nearby train station"
-                • "quiet area" → "should preferably be in a quiet residential neighborhood"
+            - Convert vague proximity ideas into clearer, **but still general** terms:
+                • "near public transport" → "should include access to public transportation"
+                • "quiet area" → "should be in a quiet residential neighborhood"
 
             - For non-numeric preferences (e.g., “good for families”, “modern look”), **do not force them into hard constraints** — rewrite them clearly but softly so downstream filtering doesn't mistake them for structured rules.
 

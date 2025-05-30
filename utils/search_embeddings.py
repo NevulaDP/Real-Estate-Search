@@ -31,17 +31,21 @@ def query_index(index, query_embedding, metadata, ids, k=5, score_threshold=0.45
     query_embedding = np.array([query_embedding])
     scores, indices = index.search(query_embedding, k)
     results = []
+    rejected= []
 
     for i in range(k):
         score = scores[0][i]
-        if indices[0][i] != -1 and score >= score_threshold:
+        if indices[0][i] != -1:
             result_id = ids[indices[0][i]]
             for item in metadata:
                 if item['id'] == result_id:
-                    results.append({
+                    entry ={
                         'score': float(score),
                         'data': item
-                    })
+                    }
+                    if score >= score_threshold:
+                        results.append(entry)
+                    else:
+                        rejected.append(entry)
                     break
-
-    return results
+    return results, rejected
