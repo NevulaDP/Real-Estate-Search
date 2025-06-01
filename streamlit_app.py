@@ -24,8 +24,8 @@ from utils.database import create_property_entry
 from utils.hf_uploader import upload_image_to_hub, upload_json_to_hub
 from utils.hf_loader import load_entries_from_hub
 from utils.evals_funcs import log_results_to_csv, attach_keyword_overlap_metrics, extract_keywords, enrich_with_scores, log_semantic_false_negatives,log_faiss_false_negatives
-from pages.upload_section import render_upload
-from pages.search_section import render_search
+from modules.upload_section import render_upload
+from modules.search_section import render_search
 
 
 #-----Gemini Configuration

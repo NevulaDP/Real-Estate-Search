@@ -47,8 +47,79 @@ def load_verification_model(force_cpu=False):
 
 
 
-def verify_claim_flan(model, claim: str, context: str) -> str:
-    prompt = f"""
+# def verify_claim_flan(model, claim: str, context: str) -> str:
+    # prompt = f"""
+        # You are verifying whether a real estate property description supports a specific user requirement.
+
+        # 🔍 Requirement: "{claim}"
+        # 📄 Property Description: "{context}"
+
+        # Your task:
+        # 1. Decide if the description fully satisfies the requirement.
+        # 2. Respond only with "True" or "False".
+
+        # Answer:
+        # """
+
+    # inputs = model["tokenizer"](prompt, return_tensors="pt", truncation=True, padding="longest", max_length=512).to(model["device"])
+
+    # with torch.no_grad():
+        # output_ids = model["model"].generate(
+            # **inputs,
+            # max_new_tokens=5,
+            # pad_token_id=model["tokenizer"].pad_token_id,
+            # eos_token_id=model["tokenizer"].eos_token_id
+        # )
+
+    # return model["tokenizer"].decode(output_ids[0], skip_special_tokens=True).strip().lower()
+
+# def flan_filter(query: str, results: list, model) -> list:
+    # filtered = []
+    # for r in results:
+        # full_text = " ".join([
+            # r['data'].get('short_text', ''),
+            # r['data'].get('description', ''),
+            # " ".join(r['data'].get('features', []))
+        # ])
+
+        # flan_response = verify_claim_flan(model, query, full_text)
+        # r['flan_response'] = flan_response
+        # r['flan_verified'] = flan_response.startswith("true")
+        # r['flan_match_score'] = 1.0 if r['flan_verified'] else 0.0
+
+        # if r['flan_verified']:
+            # filtered.append(r)
+
+    # return filtered
+    
+    
+def flan_filter(query: str, results: list, model) -> list:
+    filtered = []
+
+    contexts = [
+        " ".join([
+            r['data'].get('short_text', ''),
+            r['data'].get('description', ''),
+            " ".join(r['data'].get('features', []))
+        ]) for r in results
+    ]
+
+    claims = [query] * len(results)
+    responses = verify_claims_batch_flan(model, claims, contexts, batch_size=6)
+
+    for r, response in zip(results, responses):
+        r['flan_response'] = response
+        r['flan_verified'] = response.startswith("true")
+        r['flan_match_score'] = 1.0 if r['flan_verified'] else 0.0
+        if r['flan_verified']:
+            filtered.append(r)
+
+    return filtered
+    
+
+def verify_claims_batch_flan(model, claims: List[str], contexts: List[str], batch_size:6) -> List[str]:
+    prompts = [
+        f"""
         You are verifying whether a real estate property description supports a specific user requirement.
 
         🔍 Requirement: "{claim}"
@@ -60,37 +131,24 @@ def verify_claim_flan(model, claim: str, context: str) -> str:
 
         Answer:
         """
+        for claim, context in zip(claims, contexts)
+    ]
 
-    inputs = model["tokenizer"](prompt, return_tensors="pt", truncation=True, padding="longest", max_length=512).to(model["device"])
+    tokenizer = model["tokenizer"]
+    device = model["device"]
+    model = model["model"]
 
-    with torch.no_grad():
-        output_ids = model["model"].generate(
-            **inputs,
-            max_new_tokens=5,
-            pad_token_id=model["tokenizer"].pad_token_id,
-            eos_token_id=model["tokenizer"].eos_token_id
-        )
+    inputs = tokenizer(prompts, return_tensors="pt", padding=True, truncation=True, max_length=512).to(device)
 
-    return model["tokenizer"].decode(output_ids[0], skip_special_tokens=True).strip().lower()
+    outputs = model.generate(
+        **inputs,
+        max_new_tokens=5,
+        pad_token_id=tokenizer.pad_token_id,
+        eos_token_id=tokenizer.eos_token_id
+    )
 
-def flan_filter(query: str, results: list, model) -> list:
-    filtered = []
-    for r in results:
-        full_text = " ".join([
-            r['data'].get('short_text', ''),
-            r['data'].get('description', ''),
-            " ".join(r['data'].get('features', []))
-        ])
-
-        flan_response = verify_claim_flan(model, query, full_text)
-        r['flan_response'] = flan_response
-        r['flan_verified'] = flan_response.startswith("true")
-        r['flan_match_score'] = 1.0 if r['flan_verified'] else 0.0
-
-        if r['flan_verified']:
-            filtered.append(r)
-
-    return filtered
+    decoded = tokenizer.batch_decode(outputs, skip_special_tokens=True)
+    return [r.strip().lower() for r in decoded]
 
 
 

@@ -1,3 +1,10 @@
+"""
+features.py
+
+Utilities for extracting visual features from images using Gemini,
+and generating different textual representations of a property listing.
+"""
+
 import streamlit as st
 from PIL import Image
 import io
@@ -5,7 +12,13 @@ import base64
 import json
 
 def extract_features(image_file, client):
-    """Extract visual features from an image using Gemini."""
+    """
+    features.py
+
+    Utilities for extracting visual features from images using Gemini,
+    and generating different textual representations of a property listing.
+    """
+    
     try:
         image = Image.open(image_file).convert("RGB")
         buffered = io.BytesIO()
@@ -18,7 +31,6 @@ def extract_features(image_file, client):
         Image data: {img_str[:150]}... (truncated)
         """
 
-        #st.info("📤 Analyzing your property...")
         model = client.GenerativeModel("gemini-2.0-flash")
         response = model.generate_content(
             contents=[prompt, image],
@@ -50,6 +62,13 @@ def generate_combined_text(
     floor,
     detected_features=None
 ):
+    """
+    Generate a verbose, detailed description combining metadata and image-based features.
+
+    Returns:
+        str: Long-form combined description for semantic embedding or display.
+    """
+
     balcony_text = "This apartment includes a balcony." if balcony else "This apartment does not include a balcony."
     parking_text = "It includes a parking spot." if parking else "This apartment does not include a parking spot."
 

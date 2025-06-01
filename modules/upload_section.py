@@ -1,10 +1,18 @@
+"""
+upload_section.py
+
+Handles the user flow for uploading a new property listing in the Property Matcher app.
+
+Workflow:
+1. Form submission: User fills out property data and uploads images.
+2. Feature detection: Gemini (PaLM) detects features in images.
+3. Feature confirmation: User confirms relevant features.
+4. Finalization: Feature embedding and full property entry creation and upload.
+"""
+
 import streamlit as st
 import uuid
 import google.generativeai as palm
-from sentence_transformers import SentenceTransformer
-import os # Monitor
-import psutil # Monitor
-import gc
 
 
 from utils.features import extract_features, generate_combined_text, generate_short_text, generate_semantic_text
@@ -13,10 +21,13 @@ from utils.hf_uploader import upload_image_to_hub, upload_json_to_hub
 from utils.hf_loader import load_entries_from_hub
 
 def render_upload(model, dev_mode = False):
-        # --- Handle upload stage logic ---
+    """Main rendering function for the Upload page in the Streamlit app."""
+    
+    # Initialize session state tracker
     if "upload_stage" not in st.session_state:
        st.session_state.upload_stage = "form"
-
+       
+    # Final confirmation screen (after successful submission)
     if st.session_state.upload_stage == "done":
         entry = st.session_state.pop("finalized_entry")
         st.session_state.upload_stage = "form"  # Reset for next round
@@ -56,11 +67,13 @@ def render_upload(model, dev_mode = False):
 
         st.stop()
 
-    # --- Phase 1: Form submission ---
+    # Phase 1: User fills out the form
     if st.session_state.upload_stage == "form":
         col1, col2, col3 = st.columns([1, 2, 1])
         with col2:
-            st.title("🏡 Upload Property")
+            st.markdown("<h1 style='text-align: center;'>🏡 Upload Property</h1>", unsafe_allow_html=True)
+            st.markdown("<h4 style='text-align: center;'>Upload. Describe. Publish. It's that easy</h4>", unsafe_allow_html=True)
+            st.markdown("---")
 
         col1, col2, col3 = st.columns([1, 2, 1])
         with col2:
@@ -80,7 +93,8 @@ def render_upload(model, dev_mode = False):
                 colx1, colx2, colx3 = st.columns([1, 0.5, 1])
                 with colx2:
                     submitted = st.form_submit_button("Submit Entry")
-
+                
+                # Validation
                 if submitted and not title.strip():
                     st.warning("Title is required.", icon="⚠️")
                 if submitted and not short_description.strip():
@@ -93,7 +107,8 @@ def render_upload(model, dev_mode = False):
                     st.warning("Size must be greater than 0.", icon="⚠️")
                 if submitted and not uploaded_images:
                     st.warning("At least one image is required.", icon="⚠️")
-
+                
+                # Proceed to feature detection
                 if submitted and (
                     title.strip() and short_description.strip() and location.strip() and
                     price > 0 and size > 0 and uploaded_images
@@ -121,12 +136,13 @@ def render_upload(model, dev_mode = False):
                     st.session_state.upload_stage = "features"
                     st.rerun()
 
-    # --- Phase 2: Confirm features and finalize ---
+    # Phase 2: Feature confirmation
     if st.session_state.upload_stage == "features":
         confirmed_features = []
         features = st.session_state.pending_features
         uploaded_images = st.session_state.form_inputs.get("uploaded_images", [])
-
+        
+        # Map features to images
         num_images = len(uploaded_images)
         features_per_image = len(features) // num_images if num_images else len(features)
 
@@ -158,13 +174,15 @@ def render_upload(model, dev_mode = False):
                                 st.markdown("<hr style='margin-top: 0.25rem; margin-bottom: 0.75rem;'>", unsafe_allow_html=True)
 
                 st.markdown("---")
-
+        
+        # Final confirmation button
         col1, col2, col3 = st.columns([1, 1, 1])
         with col2:
             st.markdown("<div style='height: 15px'></div>", unsafe_allow_html=True)
             if st.button("Finalize Entry", use_container_width=True):
                 inputs = st.session_state.form_inputs
-
+                
+                # Text generation and embedding
                 combined_text = generate_combined_text(
                     inputs["title"], inputs["short_description"], inputs["location"],
                     inputs["price"], inputs["size"], inputs["num_bedrooms"],
@@ -187,7 +205,8 @@ def render_upload(model, dev_mode = False):
                 property_uuid = str(uuid.uuid4())
 
                 image_urls = [upload_image_to_hub(img, property_uuid) for img in inputs["uploaded_images"]]
-
+                
+                # Final entry creation
                 entry = create_property_entry(
                     property_uuid,
                     inputs["title"], inputs["short_description"], inputs["location"],

@@ -25,7 +25,7 @@ def log_results_to_csv(query, entries, filename="search_logs.csv"):
                 #"query_keywords": ", ".join(r.get("query_keywords", [])),
                 #"matched_keywords": ", ".join(r.get("matched_keywords", [])),
                 #"lexical_match_ratio": r.get("lexical_match_ratio", None),
-                "semantic_similarity": round(r.get("semantic_similarity", None),3),
+                "semantic_similarity": round(r["semantic_similarity"], 3) if r.get("semantic_similarity") is not None else None,
                 #"combined_score": round(r.get("combined_score",None),3),
                 "passed_semantic": r.get("passed_semantic", None),
                 "flan_response": r.get("flan_response",None),
