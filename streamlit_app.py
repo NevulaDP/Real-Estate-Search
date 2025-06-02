@@ -7,56 +7,44 @@ Handles both Upload and Search modes.
 Features:
 - Upload real estate listings with AI-analyzed images
 - Smart semantic search with FAISS, constraints, and FLAN verification
-- Logging, memory monitoring, and developer tools
+- Developer mode toggle for diagnostics
 """
 
 import streamlit as st
-import uuid
 import google.generativeai as palm
 from sentence_transformers import SentenceTransformer
 import os # Monitor
 import psutil # Monitor
-import gc
 
-
-from utils.features import extract_features, generate_combined_text, generate_short_text, generate_semantic_text
-from utils.database import create_property_entry
-from utils.hf_uploader import upload_image_to_hub, upload_json_to_hub
+# --- Data + Utility Modules ---
 from utils.hf_loader import load_entries_from_hub
-from utils.evals_funcs import log_results_to_csv, attach_keyword_overlap_metrics, extract_keywords, enrich_with_scores, log_semantic_false_negatives,log_faiss_false_negatives
+
+# --- App Modules ---
 from modules.upload_section import render_upload
 from modules.search_section import render_search
 
 
-#-----Gemini Configuration
+# --- Gemini AI Configuration ---
 palm.configure(api_key=st.secrets["GOOGLE_API_KEY"])
 
-#-----Monitoring
-
+# --- System Monitoring ---
 def log_resource_usage():
     process = psutil.Process(os.getpid())
     mem = process.memory_info().rss / (1024 ** 2)  # in MB
     cpu = process.cpu_percent(interval=0.1)
     return mem, cpu
 
-#-----Model Cache
-
+# --- Model Cache ---
 @st.cache_resource
 def load_embedding_model():
     return SentenceTransformer("BAAI/bge-small-en-v1.5")
-
-@st.cache_resource
-def get_flan_model_cpu():
-    model = load_verification_model(force_cpu=True)
-    return model
-    
     
 model = load_embedding_model()
 
-
+# --- Page Setup ---
 st.set_page_config(page_title="Property Matcher", layout="wide")
 
-#----- Init session states
+# --- Initialize Session State ---
 if "entries" not in st.session_state:
     st.session_state.entries = load_entries_from_hub()
 
@@ -68,7 +56,8 @@ if "form_inputs" not in st.session_state:
 
 if "mode" not in st.session_state:
     st.session_state.mode = "Search"
-#----- SIDEBAR
+    
+# --- SIDEBAR UI ---
 st.sidebar.markdown("""
     <style>
         .sidebar-title {
@@ -107,7 +96,7 @@ st.sidebar.markdown('<div class="sidebar-title">🏡 Property Matcher</div>', un
 
 
 
-# Create buttons and wrap in containers for styling
+# --- Sidebar Navigation ---
 upload_btn = st.sidebar.container()
 search_btn = st.sidebar.container()
 
@@ -118,7 +107,7 @@ with search_btn:
     if st.button("Search Properties"):
         st.session_state.mode = "Search"
 
-# Add 'active' class using JS
+# --- Button Highlight Logic ---
 st.sidebar.markdown(f"""
     <script>
     const buttons = window.parent.document.querySelectorAll('.stButton');
@@ -132,11 +121,12 @@ st.sidebar.markdown(f"""
     </script>
 """, unsafe_allow_html=True)
 
+# --- Dev Mode Toggle ---
 dev_mode = st.sidebar.checkbox("🛠️ Enable Dev Mode")
 
-
+# --- Main Routing Logic ---
 mode = st.session_state.mode
-#----------------#
+
 
 if mode == "Upload":
     render_upload(model, dev_mode)

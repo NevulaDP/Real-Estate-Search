@@ -49,6 +49,7 @@ def rewrite_query_with_constraints(user_query):
                 - Use strong constraint language like:
                   • "must include", "is required", "must not include", "is prohibited"
                   → for quantifiable constraints (e.g., bedrooms, price, balcony, floor)
+                  → not for vague concepts( e.g., center of the city, quite area, in good neighborhood, in a city that's not names explicitly)
 
                 - Use softer language like:
                   • "should preferably", "ideally", "would be nice if"

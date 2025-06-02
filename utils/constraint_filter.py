@@ -4,6 +4,17 @@ import re
 from utils.inferring_filter import split_query
 
 def extract_constraints_from_query(query):
+
+    """
+    Extracts structured constraints (price, size, bedrooms, bathrooms, location) from a natural language query.
+    
+    Args:
+        query (str): User's raw query text.
+    
+    Returns:
+        dict: A dictionary of extracted constraints.
+    """
+
     query = query.lower()
     constraints = {}
 
@@ -86,6 +97,18 @@ def extract_constraints_from_query(query):
     return constraints
 
 def apply_constraint_filters(data, constraints):
+
+    """
+    Applies structured constraints to a list of property entries.
+    
+    Args:
+        data (list): List of property dictionaries.
+        constraints (dict): Constraint values to filter by.
+    
+    Returns:
+        list: Filtered list of properties that match the constraints.
+    """
+
     filtered = data
     if "max_price" in constraints:
         filtered = [d for d in filtered if d.get("price", 0) < constraints["max_price"]]
@@ -108,26 +131,21 @@ def apply_constraint_filters(data, constraints):
         filtered = [d for d in filtered if d.get("location", "").lower() == loc]
     return filtered
 
-# def filter_semantic_subqueries(rewritten, constraints):
-    # subqueries = split_query(rewritten)
-
-    # # Ensure subqueries is a list
-    # if isinstance(subqueries, str):
-        # subqueries = [subqueries]
-
-    # keywords = ["price", "size", "square", "million", "$", "ft", "feet", "bedroom", "bathroom", "located]
-
-    # filtered = []
-    # for q in subqueries:
-        # if not any(kw in q.lower() for kw in keywords):
-            # print("✅ Keeping subquery:", q)  # Debug line
-            # filtered.append(q.strip())
-    # return filtered
     
 def filter_semantic_subqueries(rewritten: str, constraints: dict) -> list:
-    subqueries = split_query(rewritten)
 
-    # Keep only the subqueries that are not purely structured constraints
+    """
+    Filters rewritten subqueries to remove those that only contain structured constraints.
+    
+    Args:
+        rewritten (str): Full rewritten query.
+        constraints (dict): Detected structured constraints.
+    
+    Returns:
+        list: Subqueries that represent unstructured or semantic information.
+    """
+
+    subqueries = split_query(rewritten)
     filtered = [q.strip() for q in subqueries if not is_structured_constraint(q)]
 
     return filtered
@@ -135,9 +153,19 @@ def filter_semantic_subqueries(rewritten: str, constraints: dict) -> list:
 
 
 def is_structured_constraint(phrase: str) -> bool:
+
+    """
+    Determines whether a phrase is a structured constraint (e.g., size, price).
+    
+    Args:
+        phrase (str): Subquery or phrase to evaluate.
+    
+    Returns:
+        bool: True if it's a structured constraint, False otherwise.
+    """
+
     phrase = phrase.lower()
 
-    # Adjust these patterns based on what your extract_constraints handles
     price_pattern = r"(price|cost|under|less than|below|million|₪|\d+\s*(m|million|₪))"
     size_pattern = r"(size|square meters|sqm|larger than|smaller than|more than|less than|\d+\s*(sqm|m²))"
     bedroom_pattern = r"(bedroom|room|sleeping area)"

@@ -26,9 +26,17 @@ def extract_features(image_file, client):
         img_str = base64.b64encode(buffered.getvalue()).decode("utf-8")
 
         prompt = f"""
-        Analyze the following image and identify key household items beneficial for buyers.
-        Return a JSON array of objects with 'item' and 'description' keys.
-        Image data: {img_str[:150]}... (truncated)
+        Analyze the following image and identify:
+
+        1. Key household items that may be of interest to real estate buyers (e.g., “foldable dining table,” “gas stove,” “open shelving”), and
+
+        2. Any visible surrounding features or amenities that may be relevant to buyers, such as proximity to synagogues, supermarkets, schools, playgrounds, bus stops, or parks.
+
+        - Return a JSON array of objects with the following keys:
+
+        1. "item" – the name of the item or feature
+
+        2. "description" – a short explanation of its benefit or significance to buyers
         """
 
         model = client.GenerativeModel("gemini-2.0-flash")
