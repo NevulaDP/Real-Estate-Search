@@ -30,7 +30,7 @@ def log_results_to_csv(query, entries, filename="search_logs.csv"):
     """
 
     fieldnames = [
-        "timestamp", "query", "title", "faiss_score", "faiss_rank", "semantic_similarity", 
+        "timestamp","id","query", "title", "faiss_score", "faiss_rank", "semantic_similarity", 
         "passed_semantic", "flan_verified", "flan_response", "flan_match_score"
     ]
     with open(filename, mode="a", newline='', encoding="utf-8") as f:
@@ -41,6 +41,7 @@ def log_results_to_csv(query, entries, filename="search_logs.csv"):
         for r in entries:
             writer.writerow({
                 "timestamp": datetime.now().isoformat(),
+                "id": r['data']['id'],
                 "query": query,
                 "faiss_rank": r['data']['faiss_rank'],
                 "faiss_score": r['data']['faiss_score'],
@@ -67,14 +68,14 @@ def log_faiss_false_negatives(recovered_entries: list, filepath: str = "logs/fai
 
     with open(filepath, mode='w', newline='', encoding='utf-8') as f:
         writer = csv.DictWriter(f, fieldnames=[
-            'id', 'title', 'faiss_score', 'flan_response', 'short_text', 'description', 'features'
+            'listing_id', 'title', 'faiss_score', 'flan_response', 'short_text', 'description', 'features'
         ])
         writer.writeheader()
 
         for entry in recovered_entries:
             data = entry['data']
             writer.writerow({
-                'id': data.get('id'),
+                'listing_id': data.get('id'),
                 'title': data.get('title', 'N/A'),
                 'faiss_score': entry['score'],
                 'flan_response': entry.get('flan_response', 'N/A'),
@@ -101,7 +102,7 @@ def log_semantic_false_negatives(query, entries, folder="logs/semantic_false_neg
     filename = os.path.join(folder, f"semantic_misses_{timestamp}.csv")
 
     fieldnames = [
-        "timestamp", "query", "id", "semantic_score", "flan_response", 
+        "timestamp","listing_id", "query","semantic_score", "flan_response", 
         "flan_verified", "title", "short_text", "features", "description"
     ]
 
@@ -113,8 +114,8 @@ def log_semantic_false_negatives(query, entries, folder="logs/semantic_false_neg
             d = r.get("data", {})
             writer.writerow({
                 "timestamp": datetime.now().isoformat(),
+                "listing_id": d.get("id", ""),
                 "query": query,
-                "id": d.get("id", ""),
                 "semantic_score": round(r.get("semantic_similarity", 0), 3),
                 "flan_response": r.get("flan_response", ""),
                 "flan_verified": r.get("flan_verified", False),
