@@ -8,6 +8,5 @@ sentence-transformers
 google-generativeai
 Pillow
 psutil
-rapidfuzz
 accelerate
 
