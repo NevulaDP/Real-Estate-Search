@@ -25,6 +25,7 @@ def extract_constraints_from_query(query):
     }
     for word, digit in word_to_number.items():
         query = query.replace(word, digit)
+       
 
     # Ex. Convert "2.5 million" to 2500000
     query = re.sub(
@@ -34,7 +35,7 @@ def extract_constraints_from_query(query):
     )
 
     # --- PRICE ---
-    price_pattern = r'(?:price|dollars|\$)?\s*(?:under|less than|below|priced under|costs less than|not exceed|cannot exceed)[^\d]{0,10}(\d[\d,\.]*)'
+    price_pattern = r'(?:price|dollars|\$)?\s*(?:under|less than|below|priced under|costs less than|not exceed|cannot exceed|cost no more than|not cost more than)[^\d]{0,10}(\d[\d,\.]*)'
     match_max_price = re.search(price_pattern, query)
     if match_max_price:
         try:
@@ -51,7 +52,7 @@ def extract_constraints_from_query(query):
             pass
 
     # --- SIZE --- (only if unit is present)
-    size_unit = r'(?:\s*(?:ft|feet|sq|square(?: feet)?|sqm|meters))'
+    size_unit = r'(?:\s*(?:ft|feet|sq|square feet|square(?: feet)?|sqm|meters))'
 
     match_max_size = re.search(
         rf'(?:less than|under|smaller than|max(?:imum)? size|below)\s*(\d{{2,5}}){size_unit}',
@@ -61,7 +62,7 @@ def extract_constraints_from_query(query):
         constraints["max_size"] = int(match_max_size.group(1))
 
     match_min_size = re.search(
-        rf'(?:more than|greater than|larger than|at least|min(?:imum)? size|above)\s*(\d{{2,5}}){size_unit}',
+        rf'(?:more than|greater than|larger than|at least|over|min(?:imum)? size|above)\s*(\d{{2,5}}){size_unit}',
         query
     )
     if match_min_size:
@@ -84,6 +85,18 @@ def extract_constraints_from_query(query):
     match_max_baths = re.search(r'(?:maximum of|a maximum of|less than|under)\s*(\d+)\s*(?:bathroom|bathrooms)', query)
     if match_max_baths:
         constraints["max_bathrooms"] = int(match_max_baths.group(1))
+        
+    # --- Exact number of bedrooms ---
+    match_exact_beds = re.search(r'\b(?:must have|has|have|offers|include|includes)\s+(\d+)\s+(?:bedroom|bedrooms)\b', query)
+    if match_exact_beds:
+        constraints["min_bedrooms"] = int(match_exact_beds.group(1))
+        constraints["max_bedrooms"] = int(match_exact_beds.group(1))
+
+    # --- Exact number of bathrooms ---
+    match_exact_baths = re.search(r'\b(?:must have|has|have|offers|include|includes)\s+(\d+)\s+(?:bathroom|bathrooms)\b', query)
+    if match_exact_baths:
+        constraints["min_bathrooms"] = int(match_exact_baths.group(1))
+        constraints["max_bathrooms"] = int(match_exact_baths.group(1))
     
     # --- Location ---
     location_match = re.search(
