@@ -178,8 +178,8 @@ def render_search(model, dev_mode=False):
 
         for r in all_candidates:
             r['included'] = r in candidates
-
-        log_results_to_csv(rewritten, initial_results)
+        if dev_mode:
+            log_results_to_csv(rewritten, initial_results)
         if recovered_from_rejected and dev_mode:
             log_faiss_false_negatives(recovered_from_rejected)
 
