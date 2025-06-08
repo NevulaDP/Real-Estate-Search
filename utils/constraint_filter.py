@@ -1,7 +1,21 @@
 # utils/constraint_filter.py
 
 import re
-from utils.inferring_filter import split_query
+
+def split_query(query):
+
+    """
+    Splits a query into individual sub-queries based on punctuation or 'and'.
+
+    Args:
+        query (str): Raw user input string.
+
+    Returns:
+        List[str]: Cleaned list of query segments.
+    """
+
+    parts = query.replace(" and ", ".").split(".")
+    return [p.strip() for p in parts if p.strip()]
 
 def extract_constraints_from_query(query):
 

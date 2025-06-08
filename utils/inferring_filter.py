@@ -14,22 +14,6 @@ import torch
 from typing import List
 from transformers import AutoTokenizer, AutoModelForSeq2SeqLM
 
-
-def split_query(query):
-
-    """
-    Splits a query into individual sub-queries based on punctuation or 'and'.
-
-    Args:
-        query (str): Raw user input string.
-
-    Returns:
-        List[str]: Cleaned list of query segments.
-    """
-
-    parts = query.replace(" and ", ".").split(".")
-    return [p.strip() for p in parts if p.strip()]
-
     
 
 def load_verification_model(force_cpu=False):

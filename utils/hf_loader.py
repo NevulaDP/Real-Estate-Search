@@ -29,7 +29,7 @@ def load_entries_from_hub(filename="property_db.json"):
             repo_id=HF_REPO_ID,
             repo_type="dataset",
             filename=filename,
-            token=HF_TOKEN  # if needed
+            token=HF_TOKEN 
         )
         with open(local_path, "r") as f:
             return json.load(f)
