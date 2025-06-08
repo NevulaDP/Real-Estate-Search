@@ -40,17 +40,25 @@ The platform includes:
 
 ```
 .
-├── streamlit_app.py            # Main Streamlit app interface
-├── upload_section.py           # Handles data/image upload + preprocessing
-├── search_section.py           # Search logic, constraint filtering, embedding search, claim filtering
-├── query_rewrite.py            # Gemini-based query rewriting
-├── inferring_filter.py         # Claim verification using FLAN-T5-XL
-├── search_embeddings.py        # SentenceTransformer model loading (bge-small)
-├── constraint_filter.py        # Rule-based constraint parsing
-├── features.py                 # Visual feature extraction via Gemini
-├── evals_funcs.py              # Evaluation logging and charts
-├── hf_loader.py / hf_uploader.py  # Hugging Face I/O
-├── property_db.csv             # Property dataset (tabular format)
+├── modules/
+│   ├── upload_section.py
+│   └── search_section.py
+│
+├── utils/
+│   ├── constraint_filter.py
+│   ├── database.py
+│   ├── evals_funcs.py
+│   ├── features.py
+│   ├── hf_config.py
+│   ├── hf_loader.py
+│   ├── hf_uploader.py
+│   ├── inferring_filter.py
+│   ├── query_rewrite.py
+│   └── search_embeddings.py
+│
+├── streamlit_app.py
+├── README.md
+├── requirements.txt
 ```
 
 ---
@@ -64,9 +72,7 @@ The platform includes:
 | **SentenceTransformers** | Semantic encoding (BAAI/bge-small-en-v1.5) |
 | **Google Gemini 2.0 Flash** | Query rewriting + image item detection |
 | **FLAN-T5-XL**     | Claim verification via NLI |
-| **Pillow**         | Image handling |
 | **Hugging Face Hub** | Hosting models and datasets |
-| **NumPy / Psutil** | Optimization + memory tracking |
 
 ---
 
@@ -103,7 +109,7 @@ It draws upon recent academic research in:
 
 ## 🧑‍💻 Author
 
-**Nevo (NevulaDP)**  
+**Nevo Betesh**  
 B.Sc. in Industrial Engineering  
 Sami Shamoon College of Engineering (SCE)  
 🔗 [github.com/NevulaDP](https://github.com/NevulaDP)
